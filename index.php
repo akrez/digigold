@@ -3,19 +3,23 @@
 class DigiGold
 {
 
-    function date()
+    function path($dir, $fileName = null)
     {
-        return date('Y-m-d');
+        $array = ['.', 'cache', date('Y-m-d-H'), $dir];
+        if ($fileName) {
+            $array[] = $fileName;
+        }
+        return implode(DIRECTORY_SEPARATOR, $array);
     }
 
-    function mkdir(...$dir)
+    function mkdir($dir)
     {
-        $path = implode(DIRECTORY_SEPARATOR, ['.', 'cache', date('Y-m-d'), ...$dir]);
+        $path = $this->path($dir);
         file_exists($path) || mkdir($path, 0777, true);
         return $path;
     }
 
-    function makeGetJson($url)
+    function makeCurlHandler($url)
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -43,7 +47,7 @@ class DigiGold
 
     function sendGetJson($url)
     {
-        $ch = $this->makeGetJson($url);
+        $ch = $this->makeCurlHandler($url);
         $response = curl_exec($ch);
 
         return [
@@ -56,8 +60,7 @@ class DigiGold
 
     function sendSearch($page)
     {
-        $basePath = $this->mkdir('search');
-        $path = $basePath . DIRECTORY_SEPARATOR . $page . '.json';
+        $path = $this->path('search', $page . '.json');
 
         $exists = file_exists($path);
         if ($exists) {
@@ -83,17 +86,15 @@ class DigiGold
 
     function sendProducts($page, $productIds)
     {
-        $basePath = $this->mkdir('product', $page);
-
         $multiCurl = curl_multi_init();
 
         $count = 0;
         foreach ($productIds as $productId) {
-            $path = $basePath . DIRECTORY_SEPARATOR . $productId . '.json';
+            $path = $this->path('product', $productId . '.json');
             $exists = file_exists($path);
             if (!$exists) {
                 $count++;
-                curl_multi_add_handle($multiCurl, $this->makeGetJson('https://api.digikala.com/v2/product/' . $productId . '/'));
+                curl_multi_add_handle($multiCurl, $this->makeCurlHandler('https://api.digikala.com/v2/product/' . $productId . '/'));
             }
         }
 
@@ -109,7 +110,7 @@ class DigiGold
             $ch = $info['handle'];
             $response = curl_multi_getcontent($ch);
             $response = json_decode($response, true);
-            $path = $basePath . DIRECTORY_SEPARATOR . $response['data']['product']['id'] . '.json';
+            $path = $this->path('product', $response['data']['product']['id'] . '.json');
             $this->writeJson($path, $response);
             curl_multi_remove_handle($multiCurl, $ch);
         }
@@ -117,8 +118,8 @@ class DigiGold
 
     function product()
     {
-        $basePath = $this->mkdir('search');
-        $files = glob($basePath . DIRECTORY_SEPARATOR . '*.json');
+        $path = $this->path('search', '*.json');
+        $files = glob($path);
         natcasesort($files);
         foreach ($files as $file) {
             $page = basename($file, '.json');
@@ -137,8 +138,8 @@ class DigiGold
     {
         $results = [];
 
-        $basePath = $this->mkdir('product');
-        $files = glob($basePath . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '*.json');
+        $path = $this->path('product', '*.json');
+        $files = glob($path);
         foreach ($files as $file) {
             $product = json_decode(file_get_contents($file), true);
             $product = $product['data']['product'];
