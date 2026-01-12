@@ -1,18 +1,21 @@
 <?php
 
-class DigiGold {
+class DigiGold
+{
 
-    function date() {
+    function date()
+    {
         return date('Y-m-d');
     }
 
-    function mkdir(...$dir) {
-        $path = implode(DIRECTORY_SEPARATOR, ['.', date('Y-m-d'), ...$dir]);
-        file_exists($path) || mkdir($path,0777,true);
+    function mkdir(...$dir)
+    {
+        $path = implode(DIRECTORY_SEPARATOR, ['.', 'cache', date('Y-m-d'), ...$dir]);
+        file_exists($path) || mkdir($path, 0777, true);
         return $path;
     }
 
-    function makeGetJson($url) 
+    function makeGetJson($url)
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -22,9 +25,6 @@ class DigiGold {
             "accept: application/json, text/plain, */*",
             "accept-language: en-US,en;q=0.9,fa;q=0.8",
             "priority: u=1, i",
-            "sec-ch-ua: \"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
-            "sec-ch-ua-mobile: ?0",
-            "sec-ch-ua-platform: \"Windows\"",
             "sec-fetch-dest: empty",
             "sec-fetch-mode: cors",
             "sec-fetch-site: same-site",
@@ -36,7 +36,8 @@ class DigiGold {
         return $ch;
     }
 
-    function writeJson($path, ?array $arrayContent) {
+    function writeJson($path, ?array $arrayContent)
+    {
         file_put_contents($path, json_encode((array)$arrayContent, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
     }
 
@@ -47,83 +48,87 @@ class DigiGold {
 
         return [
             'successful' => (curl_errno($ch) == 0),
-            'error'=> curl_error($ch),
-            'response' =>$response,
-            'response_json' =>json_decode($response, true),
+            'error' => curl_error($ch),
+            'response' => $response,
+            'response_json' => json_decode($response, true),
         ];
     }
 
-    function sendSearch($page) {
+    function sendSearch($page)
+    {
         $basePath = $this->mkdir('search');
-        $path = $basePath.DIRECTORY_SEPARATOR . $page . '.json';
+        $path = $basePath . DIRECTORY_SEPARATOR . $page . '.json';
 
         $exists = file_exists($path);
-        if($exists) {
+        if ($exists) {
             return json_decode(file_get_contents($path), true);
         }
-        $res =$this-> sendGetJson('https://api.digikala.com/v1/categories/bullion/search/?page='.$page.'&price%5Bmax%5D=510000000&price%5Bmin%5D=10000000&sort=7');
+        $res = $this->sendGetJson('https://api.digikala.com/v1/categories/bullion/search/?page=' . $page . '&price%5Bmax%5D=510000000&price%5Bmin%5D=10000000&sort=7');
         $this->writeJson($path, $res['response_json']);
         return $res['response_json'];
     }
 
-    function search() {
+    function search()
+    {
         $page = 1;
         while (true) {
             $res = $this->sendSearch($page);
-            if(empty($res['data']['products'])){
+            if (empty($res['data']['products'])) {
                 return $page - 1;
-            }else{
+            } else {
                 $page++;
             }
         }
     }
 
-    function sendProducts($page, $productIds) {
+    function sendProducts($page, $productIds)
+    {
         $basePath = $this->mkdir('product', $page);
 
         $multiCurl = curl_multi_init();
 
         $count = 0;
         foreach ($productIds as $productId) {
-            $path = $basePath.DIRECTORY_SEPARATOR . $productId . '.json';
+            $path = $basePath . DIRECTORY_SEPARATOR . $productId . '.json';
             $exists = file_exists($path);
-            if(!$exists) {
+            if (!$exists) {
                 $count++;
                 curl_multi_add_handle($multiCurl, $this->makeGetJson('https://api.digikala.com/v2/product/' . $productId . '/'));
             }
         }
 
-        if(!$count) {
+        if (!$count) {
             return 0;
         }
 
         do {
             curl_multi_exec($multiCurl, $running);
-        } while($running > 0);
+        } while ($running > 0);
 
-        while(($info = curl_multi_info_read($multiCurl)) !== false) {
+        while (($info = curl_multi_info_read($multiCurl)) !== false) {
             $ch = $info['handle'];
             $response = curl_multi_getcontent($ch);
             $response = json_decode($response, true);
-            $path = $basePath.DIRECTORY_SEPARATOR . $response['data']['product']['id'] . '.json';
+            $path = $basePath . DIRECTORY_SEPARATOR . $response['data']['product']['id'] . '.json';
             $this->writeJson($path, $response);
             curl_multi_remove_handle($multiCurl, $ch);
         }
     }
 
-    function product() {
+    function product()
+    {
         $basePath = $this->mkdir('search');
-        $files = glob($basePath. DIRECTORY_SEPARATOR .'*.json');
+        $files = glob($basePath . DIRECTORY_SEPARATOR . '*.json');
         natcasesort($files);
         foreach ($files as $file) {
             $page = basename($file, '.json');
             $pageContent = json_decode(file_get_contents($file), true);
             $productIds = [];
-            if(!empty($pageContent['data']['products'])) {
+            if (!empty($pageContent['data']['products'])) {
                 foreach ($pageContent['data']['products'] as $product) {
                     $productIds[] = $product['id'];
                 }
-                $this->sendProducts($page,$productIds );
+                $this->sendProducts($page, $productIds);
             }
         }
     }
@@ -133,13 +138,13 @@ class DigiGold {
         $results = [];
 
         $basePath = $this->mkdir('product');
-        $files = glob($basePath. DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR .'*.json');
+        $files = glob($basePath . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '*.json');
         foreach ($files as $file) {
             $product = json_decode(file_get_contents($file), true);
             $product = $product['data']['product'];
             $productTitleFa = $product['title_fa'];
             $ayar = $this->extractAyar($productTitleFa);
-            if(empty($product['variants'])){
+            if (empty($product['variants'])) {
                 continue;
             }
             foreach ($product['variants'] as $variant) {
@@ -154,8 +159,8 @@ class DigiGold {
             }
         }
 
-        foreach($results as $resultKey => $result) {
-            usort($result, function($a, $b) {
+        foreach ($results as $resultKey => $result) {
+            usort($result, function ($a, $b) {
                 return $a['_price_per_gram'] - $b['_price_per_gram'];
             });
             $results[$resultKey] = $result;
@@ -164,16 +169,17 @@ class DigiGold {
         return $results;
     }
 
-    function extractAyar($productName){
+    function extractAyar($productName)
+    {
         preg_match_all("/\d+/", $productName, $matches);
         $matches = reset($matches);
 
-        if(in_array(24,$matches)) {
-            if(in_array(18,$matches)) {
+        if (in_array(24, $matches)) {
+            if (in_array(18, $matches)) {
                 return 2418;
             }
             return 24;
-        }elseif(in_array(18,$matches)) {
+        } elseif (in_array(18, $matches)) {
             return 18;
         }
         return 0;
