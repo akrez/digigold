@@ -125,7 +125,7 @@ class DigiGold
     {
         $path = $this->path('analyze.json');
         if (file_exists($path)) {
-            // return;
+            return;
         }
 
         $results = [];
