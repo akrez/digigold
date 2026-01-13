@@ -123,27 +123,40 @@ class DigiGold
 
     function analyze()
     {
+        $path = $this->path('analyze.json');
+        if (file_exists($path)) {
+            // return;
+        }
+
         $results = [];
 
-        $path = $this->path('product', '*.json');
-        $files = glob($path);
-        foreach ($files as $file) {
-            $product = json_decode(file_get_contents($file), true);
-            $product = $product['data']['product'];
-            $productTitleFa = $product['title_fa'];
-            $ayar = $this->extractAyar($productTitleFa);
-            if (empty($product['variants'])) {
-                continue;
-            }
-            foreach ($product['variants'] as $variant) {
-                // var_dump($variant);die;
-                $results[$ayar][] = [
-                    'id' => $product['id'],
-                    'title_fa' => $product['title_fa'],
-                    'selling_price' => $variant['price']['selling_price'],
-                    'size' => $variant['price']['gold_price_details']['size'],
-                    '_price_per_gram' => (floatval($variant['price']['selling_price']) / floatval($variant['price']['gold_price_details']['size'])),
-                ];
+        $productPaths = glob($this->path('product', '*.json'));
+        foreach ($productPaths as $productPath) {
+            try {
+                $data = $this->readJson($productPath)['data'];
+                if (empty($data['product']['variants'])) {
+                    continue;
+                }
+                $productId = $data['product']['id'];
+                $productTitleFa = $data['product']['title_fa'];
+                $ayar = $this->extractAyar($productTitleFa);
+                foreach ($data['product']['variants'] as $variant) {
+                    $pricePerGram = (floatval($variant['price']['selling_price']) / floatval($variant['price']['gold_price_details']['size']));
+                    $results[$ayar][] = [
+                        'id' => $productId,
+                        'title_fa' => $productTitleFa,
+                        'selling_price' => $variant['price']['selling_price'],
+                        'seller' => $variant['seller']['title'],
+                        'size' => $variant['price']['gold_price_details']['size'],
+                        'url' => $data['seo']['open_graph']['url'],
+                        'image' => $data['seo']['open_graph']['image'],
+                        '_ayar' => $ayar,
+                        '_selling_price_formatted' => number_format($variant['price']['selling_price'] / 10),
+                        '_price_per_gram' => $pricePerGram,
+                        '_price_per_gram_formatted' => number_format($pricePerGram / 10),
+                    ];
+                }
+            } catch (\Throwable $th) {
             }
         }
 
@@ -154,27 +167,39 @@ class DigiGold
             $results[$resultKey] = $result;
         }
 
-        return $results;
+        $this->writeJson($path, $results);
     }
 
     function extractAyar($productName)
     {
-        preg_match_all("/\d+/", $productName, $matches);
-        $matches = reset($matches);
-
-        if (in_array(24, $matches)) {
-            if (in_array(18, $matches)) {
-                return 2418;
+        foreach ([
+            '18عیار' => 18,
+            '18 عیار' => 18,
+            //
+            '24 عیار' => 24,
+            '۲۴ عیار' => 24,
+            //
+            '750 عیار' => 750,
+            '995 عیار' => 995,
+            '999.9 عیار' => 999,
+        ] as $ayarKey => $ayarValue) {
+            if (stripos($productName, $ayarKey) !== false) {
+                return $ayarValue;
             }
-            return 24;
-        } elseif (in_array(18, $matches)) {
-            return 18;
         }
+
         return 0;
     }
 }
 
-$dg = new DigiGold(1_000_000_0, 2_000_000_0, 7);
+$dg = new DigiGold(0, 170_000_000_0, 7);
 $dg->search();
 $dg->product();
-var_dump($dg->analyze());
+$dg->analyze();
+
+$content = $dg->readJson($dg->path('analyze.json'));
+
+// header('content-type: application/json');
+// die(json_encode($content));
+
+var_dump($content);
