@@ -60,6 +60,7 @@ class DigiGold
 
     function sendSearch($page)
     {
+        $this->mkdir('search');
         $path = $this->path('search', $page . '.json');
 
         $exists = file_exists($path);
@@ -86,6 +87,7 @@ class DigiGold
 
     function sendProducts($page, $productIds)
     {
+        $this->mkdir('product');
         $multiCurl = curl_multi_init();
 
         $count = 0;
