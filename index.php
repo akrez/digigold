@@ -2,6 +2,12 @@
 
 class DigiGold
 {
+    public function __construct(
+        protected int $minPrice,
+        protected int $maxPrice,
+        protected int $sort,
+    ) {}
+
 
     function path($dir, $fileName = null)
     {
@@ -40,98 +46,77 @@ class DigiGold
         return $ch;
     }
 
+    function readJson($path): array
+    {
+        return (array)json_decode(file_get_contents($path), true);
+    }
+
     function writeJson($path, ?array $arrayContent)
     {
         file_put_contents($path, json_encode((array)$arrayContent, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
     }
 
-    function sendGetJson($url)
-    {
-        $ch = $this->makeCurlHandler($url);
-        $response = curl_exec($ch);
-
-        return [
-            'successful' => (curl_errno($ch) == 0),
-            'error' => curl_error($ch),
-            'response' => $response,
-            'response_json' => json_decode($response, true),
-        ];
-    }
-
-    function sendSearch($page)
-    {
-        $this->mkdir('search');
-        $path = $this->path('search', $page . '.json');
-
-        $exists = file_exists($path);
-        if ($exists) {
-            return json_decode(file_get_contents($path), true);
-        }
-        $res = $this->sendGetJson('https://api.digikala.com/v1/categories/bullion/search/?page=' . $page . '&price%5Bmax%5D=510000000&price%5Bmin%5D=10000000&sort=7');
-        $this->writeJson($path, $res['response_json']);
-        return $res['response_json'];
-    }
-
     function search()
     {
+        $this->mkdir('search');
         $page = 1;
         while (true) {
-            $res = $this->sendSearch($page);
-            if (empty($res['data']['products'])) {
-                return $page - 1;
-            } else {
-                $page++;
+            $path = $this->path('search', $page . '.json');
+            if (! file_exists($path)) {
+                $url = 'https://api.digikala.com/v1/categories/bullion/search/?' . http_build_query(['page' => $page, 'price[min]' => $this->minPrice,  'price[max]' => $this->maxPrice, 'sort' => 7]);
+                $ch = $this->makeCurlHandler($url);
+                $response = (array) json_decode(curl_exec($ch), true);
+                $this->writeJson($path, $response);
             }
-        }
-    }
-
-    function sendProducts($page, $productIds)
-    {
-        $this->mkdir('product');
-        $multiCurl = curl_multi_init();
-
-        $count = 0;
-        foreach ($productIds as $productId) {
-            $path = $this->path('product', $productId . '.json');
-            $exists = file_exists($path);
-            if (!$exists) {
-                $count++;
-                curl_multi_add_handle($multiCurl, $this->makeCurlHandler('https://api.digikala.com/v2/product/' . $productId . '/'));
+            $response = $this->readJson($path);
+            if (empty($response['data']['products'])) {
+                return $page;
             }
-        }
-
-        if (!$count) {
-            return 0;
-        }
-
-        do {
-            curl_multi_exec($multiCurl, $running);
-        } while ($running > 0);
-
-        while (($info = curl_multi_info_read($multiCurl)) !== false) {
-            $ch = $info['handle'];
-            $response = curl_multi_getcontent($ch);
-            $response = json_decode($response, true);
-            $path = $this->path('product', $response['data']['product']['id'] . '.json');
-            $this->writeJson($path, $response);
-            curl_multi_remove_handle($multiCurl, $ch);
+            $page++;
         }
     }
 
     function product()
     {
-        $path = $this->path('search', '*.json');
-        $files = glob($path);
-        natcasesort($files);
-        foreach ($files as $file) {
-            $page = basename($file, '.json');
-            $pageContent = json_decode(file_get_contents($file), true);
-            $productIds = [];
-            if (!empty($pageContent['data']['products'])) {
-                foreach ($pageContent['data']['products'] as $product) {
-                    $productIds[] = $product['id'];
+        $this->mkdir('product');
+
+        $pageToProductIds = [];
+        $searchPaths = glob($this->path('search', '*.json'));
+        natcasesort($searchPaths);
+        foreach ($searchPaths as $searchPath) {
+            $page = basename($searchPath, '.json');
+            $pageContent = $this->readJson($searchPath);
+            if (empty($pageContent['data']['products'])) {
+                continue;
+            }
+            foreach ($pageContent['data']['products'] as $product) {
+                $path = $this->path('product', $product['id'] . '.json');
+                if (!file_exists($path)) {
+                    $pageToProductIds[$page][] = $product['id'];
                 }
-                $this->sendProducts($page, $productIds);
+            }
+        }
+
+        foreach ($pageToProductIds as $page => $productIds) {
+            $multiCurl = curl_multi_init();
+
+            foreach ($productIds as $productId) {
+                curl_multi_add_handle($multiCurl, $this->makeCurlHandler('https://api.digikala.com/v2/product/' . $productId . '/'));
+            }
+
+            do {
+                curl_multi_exec($multiCurl, $running);
+            } while ($running > 0);
+
+            while (($info = curl_multi_info_read($multiCurl)) !== false) {
+                $ch = $info['handle'];
+                $response = curl_multi_getcontent($ch);
+                $response = json_decode($response, true);
+                if (! empty($response['data']['product']['id'])) {
+                    $path = $this->path('product', $response['data']['product']['id'] . '.json');
+                    $this->writeJson($path, $response);
+                }
+                curl_multi_remove_handle($multiCurl, $ch);
             }
         }
     }
@@ -189,7 +174,7 @@ class DigiGold
     }
 }
 
-$dg = new DigiGold();
+$dg = new DigiGold(1_000_000_0, 2_000_000_0, 7);
 $dg->search();
 $dg->product();
 var_dump($dg->analyze());
