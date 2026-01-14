@@ -2,6 +2,17 @@
 
 class DigiGold
 {
+    /**[
+        22 => "مرتبط‌ترین",
+        4 => "پربازدیدترین",
+        1 => "جدیدترین",
+        7 => "پرفروش‌ترین‌",
+        20 => "ارزان‌ترین",
+        21 => "گران‌ترین",
+        25 => "سریع‌ترین ارسال",
+        27 => "پیشنهاد خریداران",
+        29 => "منتخب",
+    ]*/
     public function __construct(
         protected int $minPrice,
         protected int $maxPrice,
@@ -53,7 +64,7 @@ class DigiGold
 
     function writeJson($path, ?array $arrayContent)
     {
-        file_put_contents($path, json_encode((array)$arrayContent, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        file_put_contents($path, json_encode((array)$arrayContent, JSON_UNESCAPED_UNICODE));
     }
 
     function search()
@@ -63,7 +74,7 @@ class DigiGold
         while (true) {
             $path = $this->path('search', $page . '.json');
             if (! file_exists($path)) {
-                $url = 'https://api.digikala.com/v1/categories/bullion/search/?' . http_build_query(['page' => $page, 'price[min]' => $this->minPrice,  'price[max]' => $this->maxPrice, 'sort' => 7]);
+                $url = 'https://api.digikala.com/v1/categories/bullion/search/?page=' . $page . '&price%5Bmax%5D=' . $this->maxPrice . '&price%5Bmin%5D=' . $this->minPrice . '&sort='. $this->sort;
                 $ch = $this->makeCurlHandler($url);
                 $response = (array) json_decode(curl_exec($ch), true);
                 $this->writeJson($path, $response);
