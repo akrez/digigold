@@ -17,12 +17,16 @@ class DigiGold
         protected int $minPrice,
         protected int $maxPrice,
         protected int $sort,
-    ) {}
+    ) {
+        $this->mkdir('search');
+        $this->mkdir('product');
+        $this->mkdir('analyze');
+    }
 
 
     function path($dir, $fileName = null)
     {
-        $array = ['.', 'cache', date('Y-m-d-H'), $dir];
+        $array = ['.', 'cache', $dir, date('Y-m-d-H')];
         if ($fileName) {
             $array[] = $fileName;
         }
@@ -69,15 +73,30 @@ class DigiGold
 
     function search()
     {
-        $this->mkdir('search');
         $page = 1;
         while (true) {
             $path = $this->path('search', $page . '.json');
             if (! file_exists($path)) {
-                $url = 'https://api.digikala.com/v1/categories/bullion/search/?page=' . $page . '&price%5Bmax%5D=' . $this->maxPrice . '&price%5Bmin%5D=' . $this->minPrice . '&sort='. $this->sort;
-                $ch = $this->makeCurlHandler($url);
-                $response = (array) json_decode(curl_exec($ch), true);
-                $this->writeJson($path, $response);
+                $multiCurl = curl_multi_init();
+                for ($i = $page; $i < $page + 10; $i++) {
+                    $url = 'https://api.digikala.com/v1/categories/bullion/search/?page=' . $i . '&price%5Bmax%5D=' . $this->maxPrice . '&price%5Bmin%5D=' . $this->minPrice . '&sort=' . $this->sort;
+                    curl_multi_add_handle($multiCurl, $this->makeCurlHandler($url));
+                }
+
+                do {
+                    curl_multi_exec($multiCurl, $running);
+                } while ($running > 0);
+
+                while (($info = curl_multi_info_read($multiCurl)) !== false) {
+                    $ch = $info['handle'];
+                    $response = curl_multi_getcontent($ch);
+                    $response = json_decode($response, true);
+                    if (! empty($response['data']['pager']['current_page'])) {
+                        $path = $this->path('search', $response['data']['pager']['current_page'] . '.json');
+                        $this->writeJson($path, $response);
+                    }
+                    curl_multi_remove_handle($multiCurl, $ch);
+                }
             }
             $response = $this->readJson($path);
             if (empty($response['data']['products'])) {
@@ -89,8 +108,6 @@ class DigiGold
 
     function product()
     {
-        $this->mkdir('product');
-
         $pageToProductIds = [];
         $searchPaths = glob($this->path('search', '*.json'));
         natcasesort($searchPaths);
@@ -134,7 +151,7 @@ class DigiGold
 
     function analyze()
     {
-        $path = $this->path('analyze.json');
+        $path = $this->path('analyze', 'analyze.json');
         if (file_exists($path)) {
             return;
         }
@@ -183,17 +200,19 @@ class DigiGold
 
     function extractAyar($productName)
     {
-        foreach ([
-            '18عیار' => 18,
-            '18 عیار' => 18,
-            //
-            '24 عیار' => 24,
-            '۲۴ عیار' => 24,
-            //
-            '750 عیار' => 750,
-            '995 عیار' => 995,
-            '999.9 عیار' => 999,
-        ] as $ayarKey => $ayarValue) {
+        foreach (
+            [
+                '18عیار' => 18,
+                '18 عیار' => 18,
+                //
+                '24 عیار' => 24,
+                '۲۴ عیار' => 24,
+                //
+                '750 عیار' => 750,
+                '995 عیار' => 995,
+                '999.9 عیار' => 999,
+            ] as $ayarKey => $ayarValue
+        ) {
             if (stripos($productName, $ayarKey) !== false) {
                 return $ayarValue;
             }
@@ -208,7 +227,8 @@ $dg->search();
 $dg->product();
 $dg->analyze();
 
-$content = $dg->readJson($dg->path('analyze.json'));
+$path = $dg->path('analyze', 'analyze.json');
+$content = $dg->readJson($path);
 
 // header('content-type: application/json');
 // die(json_encode($content));
