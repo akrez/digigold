@@ -199,6 +199,8 @@ class DigiGold
         }
 
         $this->writeJson($path, $results);
+
+        return $path;
     }
 
     function extractAyar($productName)
@@ -223,17 +225,11 @@ class DigiGold
 
         return 0;
     }
+
+    function getLastAnalyze()
+    {
+        $this->search();
+        $this->product();
+        return $this->analyze();
+    }
 }
-
-$dg = new DigiGold(0, 170_000_000_0, 7);
-$dg->search();
-$dg->product();
-$dg->analyze();
-
-$path = $dg->path('analyze', 'analyze.json');
-$content = $dg->readJson($path);
-
-// header('content-type: application/json');
-// die(json_encode($content));
-
-var_dump($content);
