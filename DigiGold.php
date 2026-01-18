@@ -155,7 +155,7 @@ class DigiGold
     {
         $path = $this->path('analyze', 'analyze.json');
         if (file_exists($path)) {
-            return;
+            return $path;
         }
 
         $results = [];
@@ -230,6 +230,8 @@ class DigiGold
     {
         $this->search();
         $this->product();
-        return $this->analyze();
+        $path = $this->analyze();
+
+        return $this->readJson($path);
     }
 }
