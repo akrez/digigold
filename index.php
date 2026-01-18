@@ -40,25 +40,39 @@ class DigiGold
         return $path;
     }
 
-    function makeCurlHandler($url)
+    function sendMultiGet(array $urls, $fn)
     {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "accept: application/json, text/plain, */*",
-            "accept-language: en-US,en;q=0.9,fa;q=0.8",
-            "priority: u=1, i",
-            "sec-fetch-dest: empty",
-            "sec-fetch-mode: cors",
-            "sec-fetch-site: same-site",
-            "x-web-client: desktop",
-            "x-web-client-id: web",
-            "x-web-optimize-response: 1"
-        ]);
+        $multiCurl = curl_multi_init();
 
-        return $ch;
+        foreach ($urls as $url) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                "accept: application/json, text/plain, */*",
+                "accept-language: en-US,en;q=0.9,fa;q=0.8",
+                "priority: u=1, i",
+                "sec-fetch-dest: empty",
+                "sec-fetch-mode: cors",
+                "sec-fetch-site: same-site",
+                "x-web-client: desktop",
+                "x-web-client-id: web",
+                "x-web-optimize-response: 1"
+            ]);
+            curl_multi_add_handle($multiCurl, $ch);
+        }
+
+        do {
+            curl_multi_exec($multiCurl, $running);
+        } while ($running > 0);
+
+        while (($info = curl_multi_info_read($multiCurl)) !== false) {
+            $ch = $info['handle'];
+            $response = curl_multi_getcontent($ch);
+            $fn($response);
+            curl_multi_remove_handle($multiCurl, $ch);
+        }
     }
 
     function readJson($path): array
@@ -77,32 +91,28 @@ class DigiGold
         while (true) {
             $path = $this->path('search', $page . '.json');
             if (! file_exists($path)) {
-                $multiCurl = curl_multi_init();
+                $urls = [];
                 for ($i = $page; $i < $page + 10; $i++) {
-                    $url = 'https://api.digikala.com/v1/categories/bullion/search/?page=' . $i . '&price%5Bmax%5D=' . $this->maxPrice . '&price%5Bmin%5D=' . $this->minPrice . '&sort=' . $this->sort;
-                    curl_multi_add_handle($multiCurl, $this->makeCurlHandler($url));
+                    $urls[] = 'https://api.digikala.com/v1/categories/bullion/search/?page=' . $i . '&price%5Bmax%5D=' . $this->maxPrice . '&price%5Bmin%5D=' . $this->minPrice . '&sort=' . $this->sort;
                 }
 
-                do {
-                    curl_multi_exec($multiCurl, $running);
-                } while ($running > 0);
-
-                while (($info = curl_multi_info_read($multiCurl)) !== false) {
-                    $ch = $info['handle'];
-                    $response = curl_multi_getcontent($ch);
+                $this->sendMultiGet($urls, function ($response) {
                     $response = json_decode($response, true);
                     if (! empty($response['data']['pager']['current_page'])) {
                         $path = $this->path('search', $response['data']['pager']['current_page'] . '.json');
                         $this->writeJson($path, $response);
                     }
-                    curl_multi_remove_handle($multiCurl, $ch);
-                }
+                });
             }
-            $response = $this->readJson($path);
-            if (empty($response['data']['products'])) {
+            if (
+                file_exists($path) &&
+                ($response = $this->readJson($path)) &&
+                (! empty($response['data']['products']))
+            ) {
+                $page++;
+            } else {
                 return $page;
             }
-            $page++;
         }
     }
 
@@ -126,26 +136,18 @@ class DigiGold
         }
 
         foreach ($pageToProductIds as $page => $productIds) {
-            $multiCurl = curl_multi_init();
-
+            $urls = [];
             foreach ($productIds as $productId) {
-                curl_multi_add_handle($multiCurl, $this->makeCurlHandler('https://api.digikala.com/v2/product/' . $productId . '/'));
+                $urls[] = 'https://api.digikala.com/v2/product/' . $productId . '/';
             }
 
-            do {
-                curl_multi_exec($multiCurl, $running);
-            } while ($running > 0);
-
-            while (($info = curl_multi_info_read($multiCurl)) !== false) {
-                $ch = $info['handle'];
-                $response = curl_multi_getcontent($ch);
+            $this->sendMultiGet($urls, function ($response) {
                 $response = json_decode($response, true);
                 if (! empty($response['data']['product']['id'])) {
                     $path = $this->path('product', $response['data']['product']['id'] . '.json');
                     $this->writeJson($path, $response);
                 }
-                curl_multi_remove_handle($multiCurl, $ch);
-            }
+            });
         }
     }
 
@@ -173,7 +175,7 @@ class DigiGold
                     $results[$ayar][] = [
                         'id' => $productId,
                         'title_fa' => $productTitleFa,
-                        'selling_price' => $variant['price']['selling_price'],
+                        // 'selling_price' => $variant['price']['selling_price'],
                         'seller' => $variant['seller']['title'],
                         'size' => $variant['price']['gold_price_details']['size'],
                         'url' => $data['seo']['open_graph']['url'],
@@ -185,6 +187,7 @@ class DigiGold
                     ];
                 }
             } catch (\Throwable $th) {
+            } catch (\Exception $e) {
             }
         }
 
