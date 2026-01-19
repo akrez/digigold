@@ -2,27 +2,11 @@
 
 class DigiGold
 {
-    /**[
-        22 => "مرتبط‌ترین",
-        4 => "پربازدیدترین",
-        1 => "جدیدترین",
-        7 => "پرفروش‌ترین‌",
-        20 => "ارزان‌ترین",
-        21 => "گران‌ترین",
-        25 => "سریع‌ترین ارسال",
-        27 => "پیشنهاد خریداران",
-        29 => "منتخب",
-    ]*/
-    public function __construct(
-        protected int $minPrice,
-        protected int $maxPrice,
-        protected int $sort,
-    ) {
+    public function __construct() {
         $this->mkdir('search');
         $this->mkdir('product');
         $this->mkdir('analyze');
     }
-
 
     function path($dir, $fileName = null)
     {
@@ -93,7 +77,7 @@ class DigiGold
             if (! file_exists($path)) {
                 $urls = [];
                 for ($i = $page; $i < $page + 10; $i++) {
-                    $urls[] = 'https://api.digikala.com/v1/categories/bullion/search/?has_selling_stock=1&page='.$i.'&price%5Bmax%5D='.$this->maxPrice.'&price%5Bmin%5D='.$this->minPrice.'&sort=7';
+                    $urls[] = 'https://api.digikala.com/v1/categories/bullion/search/?has_selling_stock=1&page='.$i.'&sort=7';
                 }
 
                 $this->sendMultiGet($urls, function ($response) {
