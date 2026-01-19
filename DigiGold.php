@@ -96,16 +96,15 @@ class DigiGold
 
     function search()
     {
-        $page = 1;
         $this->searchList(1, 1);
-        $path = $this->path('search', $page . '.json');
+        $path = $this->path('search', 1 . '.json');
         if (
             file_exists($path) &&
             ($response = $this->readJson($path)) &&
             (! empty($response['data']['pager']['total_pages'])) && 
-            ($response['data']['pager']['total_pages'] > $page)
+            ($response['data']['pager']['total_pages'] > 1)
         ) {
-            $this->searchList($page+1, $response['data']['pager']['total_pages']);
+            $this->searchList(2, $response['data']['pager']['total_pages']);
         }
     }
 
