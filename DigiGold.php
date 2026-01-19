@@ -93,7 +93,7 @@ class DigiGold
             if (! file_exists($path)) {
                 $urls = [];
                 for ($i = $page; $i < $page + 10; $i++) {
-                    $urls[] = 'https://api.digikala.com/v1/categories/bullion/search/?page=' . $i . '&price%5Bmax%5D=' . $this->maxPrice . '&price%5Bmin%5D=' . $this->minPrice . '&sort=' . $this->sort;
+                    $urls[] = 'https://api.digikala.com/v1/categories/bullion/search/?has_selling_stock=1&page='.$i.'&price%5Bmax%5D='.$this->maxPrice.'&price%5Bmin%5D='.$this->minPrice.'&sort=7';
                 }
 
                 $this->sendMultiGet($urls, function ($response) {
