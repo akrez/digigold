@@ -30,7 +30,7 @@ class DigiGold
         return $path;
     }
 
-    function sendMultiGet(array $urls, $fn, $chunkLength = 50)
+    function sendMultiGet(array $urls, $fn, $chunkLength = 60)
     {
         foreach (array_chunk($urls, $chunkLength) as $chunkedUrls) {
 

@@ -2,20 +2,18 @@
 
 include 'DigiGold.php';
 
-$dg = new DigiGold(0, 170_000_000_0, 7);
+$dg = new DigiGold();
 
 // header('content-type: application/json');
 // die(json_encode($dg->getLastAnalyze()));
 ?>
-
-
 <!doctype html>
 <html class="h-100" lang="fa">
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- CSRF Token -->
-    <link rel="shortcut icon" href="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="./favicon.ico">
 </head>
 
 <body dir="rtl">
