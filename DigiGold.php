@@ -211,6 +211,7 @@ class DigiGold
             return $b['count'] - $a['count'];
         });
         //
+        ksort($variantsAyar);
         foreach ($variantsAyar as $ayar => $variants) {
             usort($variants, function ($a, $b) {
                 return $a['_price_per_gram'] - $b['_price_per_gram'];
