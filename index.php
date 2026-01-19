@@ -38,7 +38,7 @@ $dg = new DigiGold(0, 170_000_000_0, 7);
                             </td>
                             <td>
                                 <a target="_blank" href="<?= $row['url'] ?>"><?= $row['title_fa'] ?></a>
-                                <div><?= $row['seller'] ?></div>
+                                <div><?= $row['seller_title'] ?></div>
                                 <div><?= $row['size'] ?></div>
                                 <div><?= $row['_selling_price_formatted'] ?></div>
                                 <div><?= $row['_price_per_gram_formatted'] ?></div>

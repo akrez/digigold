@@ -2,7 +2,8 @@
 
 class DigiGold
 {
-    public function __construct() {
+    public function __construct()
+    {
         $this->mkdir('search');
         $this->mkdir('product');
         $this->mkdir('analyze');
@@ -24,9 +25,9 @@ class DigiGold
         return $path;
     }
 
-    function sendMultiGet(array $urls, $fn, $chunkLength = 20)
+    function sendMultiGet(array $urls, $fn, $chunkLength = 50)
     {
-        foreach(array_chunk($urls, $chunkLength) as $chunkedUrls) {
+        foreach (array_chunk($urls, $chunkLength) as $chunkedUrls) {
 
             $multiCurl = curl_multi_init();
 
@@ -59,7 +60,6 @@ class DigiGold
                 $fn($response);
                 curl_multi_remove_handle($multiCurl, $ch);
             }
-    
         }
     }
 
@@ -79,7 +79,7 @@ class DigiGold
         for ($i = $fromPage; $i <= $toPage; $i++) {
             $path = $this->path('search', $i . '.json');
             if (! file_exists($path)) {
-                $urls[] = 'https://api.digikala.com/v1/categories/bullion/search/?has_selling_stock=1&page='.$i.'&sort=7';
+                $urls[] = 'https://api.digikala.com/v1/categories/bullion/search/?has_selling_stock=1&page=' . $i . '&sort=7';
             }
         }
         if (empty($urls)) {
@@ -109,7 +109,7 @@ class DigiGold
 
     function product()
     {
-        $pageToProductIds = [];
+        $urls = [];
         $searchPaths = glob($this->path('search', '*.json'));
         natcasesort($searchPaths);
         foreach ($searchPaths as $searchPath) {
@@ -120,26 +120,19 @@ class DigiGold
             }
             foreach ($pageContent['data']['products'] as $product) {
                 $path = $this->path('product', $product['id'] . '.json');
-                if (!file_exists($path)) {
-                    $pageToProductIds[$page][] = $product['id'];
+                if (! file_exists($path)) {
+                    $urls[] = 'https://api.digikala.com/v2/product/' . $product['id'] . '/';
                 }
             }
         }
 
-        foreach ($pageToProductIds as $page => $productIds) {
-            $urls = [];
-            foreach ($productIds as $productId) {
-                $urls[] = 'https://api.digikala.com/v2/product/' . $productId . '/';
+        $this->sendMultiGet($urls, function ($response) {
+            $response = json_decode($response, true);
+            if (! empty($response['data']['product']['id'])) {
+                $path = $this->path('product', $response['data']['product']['id'] . '.json');
+                $this->writeJson($path, $response);
             }
-
-            $this->sendMultiGet($urls, function ($response) {
-                $response = json_decode($response, true);
-                if (! empty($response['data']['product']['id'])) {
-                    $path = $this->path('product', $response['data']['product']['id'] . '.json');
-                    $this->writeJson($path, $response);
-                }
-            });
-        }
+        });
     }
 
     function analyze()
@@ -166,8 +159,9 @@ class DigiGold
                     $results[$ayar][] = [
                         'id' => $productId,
                         'title_fa' => $productTitleFa,
-                        // 'selling_price' => $variant['price']['selling_price'],
-                        'seller' => $variant['seller']['title'],
+                        'selling_price' => $variant['price']['selling_price'],
+                        'seller_id' => $variant['seller']['id'],
+                        'seller_title' => $variant['seller']['title'],
                         'size' => $variant['price']['gold_price_details']['size'],
                         'url' => $data['seo']['open_graph']['url'],
                         'image' => $data['seo']['open_graph']['image'],
@@ -207,7 +201,7 @@ class DigiGold
                 //
                 '750 عیار' => 750,
                 '995 عیار' => 995,
-                '999.9 عیار' => 999.9,
+                '999.9 عیار' => 999,
             ] as $ayarKey => $ayarValue
         ) {
             if (stripos($productName, $ayarKey) !== false) {
