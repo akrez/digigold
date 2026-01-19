@@ -101,8 +101,7 @@ class DigiGold
         if (
             file_exists($path) &&
             ($response = $this->readJson($path)) &&
-            (! empty($response['data']['pager']['total_pages'])) && 
-            ($response['data']['pager']['total_pages'] > 1)
+            (isset($response['data']['pager']['total_pages'])) && ($response['data']['pager']['total_pages'] > 1)
         ) {
             $this->searchList(2, $response['data']['pager']['total_pages']);
         }
