@@ -9,9 +9,14 @@ class DigiGold
         $this->mkdir('analyze');
     }
 
+    function date()
+    {
+        return date('Y-m-d-H');
+    }
+
     function path($dir, $fileName = null)
     {
-        $array = ['.', 'cache', $dir, date('Y-m-d-H')];
+        $array = ['.', 'cache', $dir, $this->date()];
         if ($fileName) {
             $array[] = $fileName;
         }
@@ -142,7 +147,10 @@ class DigiGold
             return $path;
         }
 
-        $results = [];
+        $variantsAyar = [];
+        $sellers = [];
+        $sizes = [];
+        $sellingPrices = ['min' => null, 'max' => null];
 
         $productPaths = glob($this->path('product', '*.json'));
         foreach ($productPaths as $productPath) {
@@ -155,35 +163,68 @@ class DigiGold
                 $productTitleFa = $data['product']['title_fa'];
                 $ayar = $this->extractAyar($productTitleFa);
                 foreach ($data['product']['variants'] as $variant) {
-                    $pricePerGram = (floatval($variant['price']['selling_price']) / floatval($variant['price']['gold_price_details']['size']));
-                    $results[$ayar][] = [
+                    $sellerId = $variant['seller']['id'];
+                    $sellerTitle = $variant['seller']['title'];
+                    $size = floatval($variant['price']['gold_price_details']['size']);
+                    $sellingPrice = floatval($variant['price']['selling_price']);
+                    $pricePerGram = ($sellingPrice / $size);
+                    //
+                    $variantsAyar[$ayar][] = [
                         'id' => $productId,
                         'title_fa' => $productTitleFa,
-                        'selling_price' => $variant['price']['selling_price'],
-                        'seller_id' => $variant['seller']['id'],
-                        'seller_title' => $variant['seller']['title'],
-                        'size' => $variant['price']['gold_price_details']['size'],
+                        'selling_price' => $sellingPrice,
+                        'seller_id' => $sellerId,
+                        'seller_title' => $sellerTitle,
+                        'size' => $size,
                         'url' => $data['seo']['open_graph']['url'],
                         'image' => $data['seo']['open_graph']['image'],
                         '_ayar' => $ayar,
-                        '_selling_price_formatted' => number_format($variant['price']['selling_price'] / 10),
+                        '_selling_price_formatted' => number_format($sellingPrice / 10),
                         '_price_per_gram' => $pricePerGram,
                         '_price_per_gram_formatted' => number_format($pricePerGram / 10),
                     ];
+                    //
+                    $sellers[$sellerId] = [
+                        'id' => $sellerId,
+                        'title' => $sellerTitle,
+                        'count' => (isset($sellers[$sellerId]) ? $sellers[$sellerId]['count'] + 1 : 1),
+                    ];
+                    //
+                    $sizes[strval($size)] = $size;
+                    //
+                    if ($sellingPrices['min'] === null || $sellingPrice < $sellingPrices['min']) {
+                        $sellingPrices['min'] = $sellingPrice;
+                    }
+                    if ($sellingPrices['max'] === null || $sellingPrices['max'] < $sellingPrice) {
+                        $sellingPrices['max'] = $sellingPrice;
+                    }
                 }
             } catch (\Throwable $th) {
             } catch (\Exception $e) {
             }
         }
 
-        foreach ($results as $resultKey => $result) {
-            usort($result, function ($a, $b) {
+        $sizes = array_values($sizes);
+        sort($sizes);
+        //
+        usort($sellers, function ($a, $b) {
+            return $b['count'] - $a['count'];
+        });
+        //
+        foreach ($variantsAyar as $ayar => $variants) {
+            usort($variants, function ($a, $b) {
                 return $a['_price_per_gram'] - $b['_price_per_gram'];
             });
-            $results[$resultKey] = $result;
+            $variantsAyar[$ayar] = $variants;
         }
 
-        $this->writeJson($path, $results);
+        $this->writeJson($path, [
+            'date' => $this->date(),
+            'selling_prices' => $sellingPrices,
+            'sizes' => $sizes,
+            'sellers' => $sellers,
+            'variants_ayar' => $variantsAyar,
+        ]);
 
         return $path;
     }

@@ -21,7 +21,7 @@ $dg = new DigiGold(0, 170_000_000_0, 7);
 <body dir="rtl">
     <div style="display: flex; align-items: flex-start;">
 
-        <?php foreach ($dg->getLastAnalyze() as $ayar => $ayarRows) { ?>
+        <?php foreach ($dg->getLastAnalyze()['variants_ayar'] as $ayar => $variants) { ?>
             <table>
                 <thead>
                     <tr>
@@ -31,17 +31,17 @@ $dg = new DigiGold(0, 170_000_000_0, 7);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach (array_slice($ayarRows, 0, 20) as $row) { ?>
+                    <?php foreach (array_slice($variants, 0, 20) as $variant) { ?>
                         <tr>
                             <td>
-                                <img src="<?= $row['image'] ?>" style="max-width: 128px; max-height: 128px;">
+                                <img src="<?= $variant['image'] ?>" style="max-width: 128px; max-height: 128px;">
                             </td>
                             <td>
-                                <a target="_blank" href="<?= $row['url'] ?>"><?= $row['title_fa'] ?></a>
-                                <div><?= $row['seller_title'] ?></div>
-                                <div><?= $row['size'] ?></div>
-                                <div><?= $row['_selling_price_formatted'] ?></div>
-                                <div><?= $row['_price_per_gram_formatted'] ?></div>
+                                <a target="_blank" href="<?= $variant['url'] ?>"><?= $variant['title_fa'] ?></a>
+                                <div><?= $variant['seller_title'] ?></div>
+                                <div><?= $variant['size'] ?></div>
+                                <div><?= $variant['_selling_price_formatted'] ?></div>
+                                <div><?= $variant['_price_per_gram_formatted'] ?></div>
                             </td>
                         </tr>
                     <?php } ?>
