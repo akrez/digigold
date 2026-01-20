@@ -3,6 +3,7 @@
 include 'DigiGold.php';
 
 $dg = new DigiGold();
+$lastAnalyze = $dg->getLastAnalyze();
 
 // header('content-type: application/json');
 // die(json_encode($dg->getLastAnalyze()));
@@ -18,6 +19,7 @@ $dg = new DigiGold();
     <link rel="shortcut icon" href="./favicon.ico">
     <link href="./assets/bootstrap/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="./assets/sahel/css/sahel.css" rel="stylesheet">
+    <script src="./assets/bootstrap/js/bootstrap.min.js"></script>
     <style>
         * {
             font-family: Sahel;
@@ -41,16 +43,20 @@ $dg = new DigiGold();
             <div class="col-sm-2">
             </div>
             <div class="col-sm-8 mt-3">
-                <?php foreach ($dg->getLastAnalyze()['variants_ayar'] as $ayar => $variants) { ?>
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-12">
-                                <table class="table table-bordered table-sm">
-                                    <thead>
-                                        <tr class="border-top-width-half">
-                                            <th colspan="8" class="text-center table-info">عیار <?= $ayar ?></th>
-                                        </tr>
-                                    </thead>
+
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <?php foreach ($lastAnalyze['variants_ayar'] as $ayar => $variants) { ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?= $ayar == 18 ? 'active' : '' ?>" data-bs-toggle="tab" href="#tab-<?= crc32($ayar) ?>" role="tab" aria-controls="tab-<?= crc32($ayar) ?>" aria-selected="true">
+                                عیار <?= $ayar ?>
+                            </a>
+                        </li>
+                    <?php } ?>
+                </ul>
+                <div class="tab-content border-x p-0">
+                    <?php foreach ($lastAnalyze['variants_ayar'] as $ayar => $variants) { ?>
+                        <div class="tab-pane fade <?= $ayar == 18 ? 'show active' : '' ?>" id="tab-<?= crc32($ayar) ?>" role="tabpanel">
+                            <table class="table table-bordered table-sm">
                                     <tbody>
                                         <?php foreach (array_slice($variants, 0, 20) as $variant) { ?>
                                             <tr class="border-top-width-half">
@@ -75,10 +81,9 @@ $dg = new DigiGold();
                                         <?php } ?>
                                     </tbody>
                                 </table>
-                            </div>
                         </div>
-                    </div>
-                <?php } ?>
+                    <?php } ?>
+                </div>
             </div>
             <div class="col-sm-2">
             </div>
