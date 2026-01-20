@@ -26,8 +26,7 @@ $lastAnalyze = $dg->getLastAnalyze();
         }
 
         .max-50px {
-            max-width: 50px;
-            max-height: 50px;
+            max-height: 38px;
         }
 
         .border-bottom-width-half {
@@ -49,11 +48,11 @@ $lastAnalyze = $dg->getLastAnalyze();
 
     <div class="container-fluid">
         <div class="row">
-            <div class="col-sm-2">
+            <div class="col-lg-2">
             </div>
-            <div class="col-sm-8 mt-3">
+            <div class="col-lg-8 mt-3">
 
-                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <ul class="nav nav-pills nav-fill" role="tablist">
                     <?php foreach ($lastAnalyze['variants_ayar'] as $ayar => $variants) { ?>
                         <li class="nav-item">
                             <a class="nav-link <?= $ayar == 18 ? 'active' : '' ?>" data-bs-toggle="tab" href="#tab-<?= crc32($ayar) ?>" role="tab" aria-controls="tab-<?= crc32($ayar) ?>" aria-selected="true">
@@ -62,39 +61,42 @@ $lastAnalyze = $dg->getLastAnalyze();
                         </li>
                     <?php } ?>
                 </ul>
-                <div class="tab-content border-x p-0">
+                <div class="tab-content border-x px-0 pt-3">
                     <?php foreach ($lastAnalyze['variants_ayar'] as $ayar => $variants) { ?>
-                        <div class="tab-pane fade <?= $ayar == 18 ? 'show active' : '' ?> table-responsive" id="tab-<?= crc32($ayar) ?>" role="tabpanel">
-                            <table class="table table-bordered table-sm">
-                                    <tbody>
-                                        <?php foreach (array_slice($variants, 0, 20) as $variant) { ?>
-                                            <tr>
-                                                <td rowspan="2" class="text-center align-middle">
-                                                    <img src="<?= $variant['image'] ?>" class="max-50px">
-                                                </td>
-                                                <td colspan="7">
-                                                    <a class="text-decoration-none" target="_blank" href="<?= $variant['url'] ?>">
-                                                        <?= $variant['title_fa'] ?>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                            <tr class="border-bottom-width-half">
-                                                <td><?= $variant['seller_title'] ?></td>
-                                                <td class="table-secondary fw-bold">وزن</td>
-                                                <td class="font-monospace"><?= $variant['size'] ?></td>
-                                                <td class="table-secondary fw-bold">قیمت هر گرم</td>
-                                                <td class="font-monospace"><?= $variant['_price_per_gram_formatted'] ?></td>
-                                                <td class="table-secondary fw-bold">قیمت</td>
-                                                <td class="font-monospace"><?= $variant['_selling_price_formatted'] ?></td>
-                                            </tr>
-                                        <?php } ?>
-                                    </tbody>
-                                </table>
+                        <div class="tab-pane fade <?= $ayar == 18 ? 'show active' : '' ?>" id="tab-<?= crc32($ayar) ?>" role="tabpanel">
+                            <table class="table table-bordered table-striped align-middle">
+                                <thead class="bg-200 text-900 table-dark">
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th>فروشنده</th>
+                                        <th>وزن</th>
+                                        <th>قیمت</th>
+                                        <th>قیمت هر گرم</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach (array_slice($variants, 0, 20) as $variant) { ?>
+                                        <tr>
+                                            <td class="text-center p-0"><img src="<?= $variant['image'] ?>" class="max-50px"></td>
+                                            <td>
+                                                <a class="text-decoration-none" target="_blank" href="<?= $variant['url'] ?>">
+                                                    <?= $variant['title_fa'] ?>
+                                                </a>
+                                            </td>
+                                            <td><?= $variant['seller_title'] ?></td>
+                                            <td class="font-monospace"><?= $variant['size'] ?></td>
+                                            <td class="font-monospace"><?= $variant['_selling_price_formatted'] ?></td>
+                                            <td class="font-monospace"><?= $variant['_price_per_gram_formatted'] ?></td>
+                                        </tr>
+                                    <?php } ?>
+                                </tbody>
+                            </table>
                         </div>
                     <?php } ?>
                 </div>
             </div>
-            <div class="col-sm-2">
+            <div class="col-lg-2">
             </div>
         </div>
     </div>
