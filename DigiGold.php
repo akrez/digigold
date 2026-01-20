@@ -244,6 +244,8 @@ class DigiGold
                 '750 عیار' => 750,
                 '995 عیار' => 995,
                 '999.9 عیار' => 999,
+                //
+                'شمش طلا 24 ' => 24,
             ] as $ayarKey => $ayarValue
         ) {
             if (stripos($productName, $ayarKey) !== false) {
