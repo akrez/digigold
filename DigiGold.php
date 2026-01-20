@@ -9,37 +9,24 @@ class DigiGold
     const CARAT_995 = 995;
     const CARAT_999 = 999;
 
-    public function __construct()
+    public function __construct(public $basePath)
     {
-        date_default_timezone_set('Asia/Tehran');
-        set_time_limit(120);
-        $this->mkdir('search');
-        $this->mkdir('product');
-        $this->mkdir('analyze');
+        foreach (['search', 'product'] as $dir) {
+            $path = $this->path($dir);
+            file_exists($path) || mkdir($path, 0777, true);
+        }
     }
 
-    function date()
+    protected function path($dir, $fileName = null)
     {
-        return date('Y-m-d-H');
-    }
-
-    function path($dir, $fileName = null)
-    {
-        $array = [__DIR__, 'cache', $dir, $this->date()];
-        if ($fileName) {
+        $array = [$this->basePath, $dir];
+        if ($fileName !== null) {
             $array[] = $fileName;
         }
         return implode(DIRECTORY_SEPARATOR, $array);
     }
 
-    function mkdir($dir)
-    {
-        $path = $this->path($dir);
-        file_exists($path) || mkdir($path, 0777, true);
-        return $path;
-    }
-
-    function sendMultiGet(array $urls, $fn, $chunkLength = 60)
+    protected function sendMultiGet(array $urls, $fn, $chunkLength = 60)
     {
         foreach (array_chunk($urls, $chunkLength) as $chunkedUrls) {
 
@@ -77,17 +64,17 @@ class DigiGold
         }
     }
 
-    function readJson($path): array
+    protected function readJson($path): array
     {
         return (array)json_decode(file_get_contents($path), true);
     }
 
-    function writeJson($path, ?array $arrayContent)
+    protected function writeJson($path, ?array $arrayContent)
     {
         file_put_contents($path, json_encode((array)$arrayContent, JSON_UNESCAPED_UNICODE));
     }
 
-    function searchList($fromPage, $toPage)
+    protected function downloadSearchPages($fromPage, $toPage)
     {
         $urls = [];
         for ($i = $fromPage; $i <= $toPage; $i++) {
@@ -108,26 +95,12 @@ class DigiGold
         });
     }
 
-    function search()
-    {
-        $this->searchList(1, 1);
-        $path = $this->path('search', 1 . '.json');
-        if (
-            file_exists($path) &&
-            ($response = $this->readJson($path)) &&
-            (isset($response['data']['pager']['total_pages'])) && ($response['data']['pager']['total_pages'] > 1)
-        ) {
-            $this->searchList(2, $response['data']['pager']['total_pages']);
-        }
-    }
-
-    function product()
+    protected function downloadProductPages()
     {
         $urls = [];
         $searchPaths = glob($this->path('search', '*.json'));
         natcasesort($searchPaths);
         foreach ($searchPaths as $searchPath) {
-            $page = basename($searchPath, '.json');
             $pageContent = $this->readJson($searchPath);
             if (empty($pageContent['data']['products'])) {
                 continue;
@@ -149,17 +122,19 @@ class DigiGold
         });
     }
 
-    function analyze()
+    protected function writeAnalyzeFile($path)
     {
-        $path = $this->path('analyze', 'analyze.json');
-        if (file_exists($path)) {
-            return $path;
-        }
-
-        $variantsCarat = [];
+        $variantsCarat = [
+            static::CARAT_0 => [],
+            static::CARAT_18 => [],
+            static::CARAT_24 => [],
+            static::CARAT_750 => [],
+            static::CARAT_995 => [],
+            static::CARAT_999 => [],
+        ];
         $sellers = [];
+        $sellingPrices = [];
         $sizes = [];
-        $sellingPrices = ['min' => null, 'max' => null];
 
         $productPaths = glob($this->path('product', '*.json'));
         foreach ($productPaths as $productPath) {
@@ -200,22 +175,13 @@ class DigiGold
                     ];
                     //
                     $sizes[strval($size)] = $size;
-                    //
-                    if ($sellingPrices['min'] === null || $sellingPrice < $sellingPrices['min']) {
-                        $sellingPrices['min'] = $sellingPrice;
-                    }
-                    if ($sellingPrices['max'] === null || $sellingPrices['max'] < $sellingPrice) {
-                        $sellingPrices['max'] = $sellingPrice;
-                    }
+                    $sellingPrices[strval($sellingPrice)] = $sellingPrice;
                 }
             } catch (\Throwable $th) {
             } catch (\Exception $e) {
             }
         }
 
-        $sizes = array_values($sizes);
-        sort($sizes);
-        //
         usort($sellers, function ($a, $b) {
             return $b['count'] - $a['count'];
         });
@@ -229,9 +195,9 @@ class DigiGold
         }
 
         $this->writeJson($path, [
-            'date' => $this->date(),
-            'selling_prices' => $sellingPrices,
-            'sizes' => $sizes,
+            'date' => date('Y-m-d H:i:s'),
+            'sizes' => ['min' => min($sizes), 'max' => max($sizes)],
+            'selling_prices' => ['min' => min($sellingPrices), 'max' => max($sellingPrices)],
             'sellers' => $sellers,
             'variants_carat' => $variantsCarat,
         ]);
@@ -239,7 +205,7 @@ class DigiGold
         return $path;
     }
 
-    function extractCarat($productName)
+    protected function extractCarat($productName)
     {
         foreach (
             [
@@ -265,15 +231,23 @@ class DigiGold
         return static::CARAT_0;
     }
 
-    function getLastAnalyze()
+    public function analyze()
     {
-        $path = $this->path('analyze', 'analyze.json');
-        if (!file_exists($path)) {
-            $this->search();
-            $this->product();
-            $path = $this->analyze();
+        $analyzeFilePath = $this->path('analyze.json');
+        if (! file_exists($analyzeFilePath)) {
+            $this->downloadSearchPages(1, 1);
+            $firstSearchPagePath = $this->path('search', '1.json');
+            if (
+                file_exists($firstSearchPagePath) &&
+                ($response = $this->readJson($firstSearchPagePath)) &&
+                (isset($response['data']['pager']['total_pages'])) && ($response['data']['pager']['total_pages'] > 1)
+            ) {
+                $this->downloadSearchPages(2, $response['data']['pager']['total_pages']);
+            }
+            $this->downloadProductPages();
+            $this->writeAnalyzeFile($analyzeFilePath);
         }
 
-        return $this->readJson($path);
+        return $this->readJson($analyzeFilePath);
     }
 }

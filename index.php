@@ -1,21 +1,14 @@
 <?php
-
-include 'DigiGold.php';
-
-$dg = new DigiGold();
-
-$lastAnalyze = $dg->getLastAnalyze();
-$lastAnalyze['variants_carat'] = array_filter($lastAnalyze['variants_carat']);
-$firstCarat = key($lastAnalyze['variants_carat']);
-
-// header('content-type: application/json');
-// die(json_encode($dg->getLastAnalyze()));
+$analyzeFilePath = __DIR__ . DIRECTORY_SEPARATOR . 'analyze.json';
+$analyze = json_decode(file_get_contents($analyzeFilePath), true);
+$analyze['variants_carat'] = array_filter($analyze['variants_carat']);
+$firstCaratKey = key($analyze['variants_carat']);
 ?>
 <!doctype html>
 <html class="h-100" lang="fa">
 
 <head>
-    <title>Akrez DigiGold</title>
+    <title>Akrezing Digikala Gold</title>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,7 +48,7 @@ $firstCarat = key($lastAnalyze['variants_carat']);
             </div>
             <div class="col-lg-8">
                 <div class="alert alert-info my-3 text-center" dir="ltr">
-                    <?= DateTime::createFromFormat('Y-m-d-H', $lastAnalyze['date'])->format('Y-m-d H:00:00') ?>
+                    <?= $analyze['date'] ?>
                 </div>
             </div>
             <div class="col-lg-2">
@@ -67,17 +60,17 @@ $firstCarat = key($lastAnalyze['variants_carat']);
             <div class="col-lg-8">
 
                 <ul class="nav nav-pills nav-fill" role="tablist">
-                    <?php foreach ($lastAnalyze['variants_carat'] as $carat => $variants) { ?>
+                    <?php foreach ($analyze['variants_carat'] as $carat => $variants) { ?>
                         <li class="nav-item">
-                            <a class="nav-link <?= $carat == $firstCarat ? 'active' : '' ?>" data-bs-toggle="tab" href="#tab-<?= crc32($carat) ?>" role="tab" aria-controls="tab-<?= crc32($carat) ?>" aria-selected="true">
+                            <a class="nav-link <?= $carat == $firstCaratKey ? 'active' : '' ?>" data-bs-toggle="tab" href="#tab-<?= crc32($carat) ?>" role="tab" aria-controls="tab-<?= crc32($carat) ?>" aria-selected="true">
                                 عیار <?= $carat ?>
                             </a>
                         </li>
                     <?php } ?>
                 </ul>
                 <div class="tab-content border-x px-0 pt-3">
-                    <?php foreach ($lastAnalyze['variants_carat'] as $carat => $variants) { ?>
-                        <div class="tab-pane fade table-responsive <?= $carat == $firstCarat ? 'show active' : '' ?>" id="tab-<?= crc32($carat) ?>" role="tabpanel">
+                    <?php foreach ($analyze['variants_carat'] as $carat => $variants) { ?>
+                        <div class="tab-pane fade table-responsive <?= $carat == $firstCaratKey ? 'show active' : '' ?>" id="tab-<?= crc32($carat) ?>" role="tabpanel">
                             <table class="table table-bordered table-striped table-sm align-middle">
                                 <thead class="bg-200 text-900 table-dark">
                                     <tr>
