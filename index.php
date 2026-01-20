@@ -30,8 +30,17 @@ $lastAnalyze = $dg->getLastAnalyze();
             max-height: 50px;
         }
 
-        .border-top-width-half {
-            border-top-width: 0.15rem !important;
+        .border-bottom-width-half {
+            border-bottom-width: 0.15rem !important;
+        }
+
+        .nav-link {
+            border-color: rgb(222, 226, 230) !important;
+        }
+
+        .nav-link.active {
+            color: #fff !important;
+            background-color: RGBA(var(--bs-primary-rgb), var(--bs-bg-opacity, 1)) !important;
         }
     </style>
 </head>
@@ -59,7 +68,7 @@ $lastAnalyze = $dg->getLastAnalyze();
                             <table class="table table-bordered table-sm">
                                     <tbody>
                                         <?php foreach (array_slice($variants, 0, 20) as $variant) { ?>
-                                            <tr class="border-top-width-half">
+                                            <tr>
                                                 <td rowspan="2" class="text-center align-middle">
                                                     <img src="<?= $variant['image'] ?>" class="max-50px">
                                                 </td>
@@ -69,7 +78,7 @@ $lastAnalyze = $dg->getLastAnalyze();
                                                     </a>
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            <tr class="border-bottom-width-half">
                                                 <td><?= $variant['seller_title'] ?></td>
                                                 <td class="table-secondary fw-bold">وزن</td>
                                                 <td class="font-monospace"><?= $variant['size'] ?></td>
