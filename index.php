@@ -77,16 +77,16 @@ $firstCarat = key($lastAnalyze['variants_carat']);
                 </ul>
                 <div class="tab-content border-x px-0 pt-3">
                     <?php foreach ($lastAnalyze['variants_carat'] as $carat => $variants) { ?>
-                        <div class="tab-pane fade <?= $carat == $firstCarat ? 'show active' : '' ?>" id="tab-<?= crc32($carat) ?>" role="tabpanel">
+                        <div class="tab-pane fade table-responsive <?= $carat == $firstCarat ? 'show active' : '' ?>" id="tab-<?= crc32($carat) ?>" role="tabpanel">
                             <table class="table table-bordered table-striped align-middle">
                                 <thead class="bg-200 text-900 table-dark">
                                     <tr>
                                         <th></th>
                                         <th></th>
-                                        <th>فروشنده</th>
-                                        <th>وزن</th>
-                                        <th>قیمت</th>
                                         <th>قیمت هر گرم</th>
+                                        <th>قیمت</th>
+                                        <th>وزن</th>
+                                        <th>فروشنده</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -98,10 +98,10 @@ $firstCarat = key($lastAnalyze['variants_carat']);
                                                     <?= $variant['title_fa'] ?>
                                                 </a>
                                             </td>
-                                            <td><?= $variant['seller_title'] ?></td>
-                                            <td class="font-monospace"><?= $variant['size'] ?></td>
-                                            <td class="font-monospace"><?= $variant['_selling_price_formatted'] ?></td>
                                             <td class="font-monospace"><?= $variant['_price_per_gram_formatted'] ?></td>
+                                            <td class="font-monospace"><?= $variant['_selling_price_formatted'] ?></td>
+                                            <td class="font-monospace"><?= $variant['size'] ?></td>
+                                            <td><?= $variant['seller_title'] ?></td>
                                         </tr>
                                     <?php } ?>
                                 </tbody>
