@@ -47,7 +47,7 @@ $lastAnalyze = $dg->getLastAnalyze();
 <body dir="rtl">
 
     <div class="container-fluid">
-        <div class="row">
+        <div class="row mt-5">
             <div class="col-lg-2">
             </div>
             <div class="col-lg-8 mt-3">
