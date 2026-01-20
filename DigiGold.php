@@ -4,6 +4,8 @@ class DigiGold
 {
     public function __construct()
     {
+        date_default_timezone_set('Asia/Tehran');
+        set_time_limit(120);
         $this->mkdir('search');
         $this->mkdir('product');
         $this->mkdir('analyze');

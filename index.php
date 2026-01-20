@@ -47,10 +47,21 @@ $lastAnalyze = $dg->getLastAnalyze();
 <body dir="rtl">
 
     <div class="container-fluid">
-        <div class="row mt-5">
+        <div class="row">
             <div class="col-lg-2">
             </div>
-            <div class="col-lg-8 mt-3">
+            <div class="col-lg-8">
+                <div class="alert alert-info my-3 text-center" dir="ltr">
+                    <?= DateTime::createFromFormat('Y-m-d-H', $lastAnalyze['date'])->format('Y-m-d H:00:00') ?>
+                </div>
+            </div>
+            <div class="col-lg-2">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-2">
+            </div>
+            <div class="col-lg-8">
 
                 <ul class="nav nav-pills nav-fill" role="tablist">
                     <?php foreach ($lastAnalyze['variants_ayar'] as $ayar => $variants) { ?>
