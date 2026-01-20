@@ -64,7 +64,7 @@ $lastAnalyze = $dg->getLastAnalyze();
                 </ul>
                 <div class="tab-content border-x p-0">
                     <?php foreach ($lastAnalyze['variants_ayar'] as $ayar => $variants) { ?>
-                        <div class="tab-pane fade <?= $ayar == 18 ? 'show active' : '' ?>" id="tab-<?= crc32($ayar) ?>" role="tabpanel">
+                        <div class="tab-pane fade <?= $ayar == 18 ? 'show active' : '' ?> table-responsive" id="tab-<?= crc32($ayar) ?>" role="tabpanel">
                             <table class="table table-bordered table-sm">
                                     <tbody>
                                         <?php foreach (array_slice($variants, 0, 20) as $variant) { ?>
