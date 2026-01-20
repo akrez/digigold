@@ -2,6 +2,13 @@
 
 class DigiGold
 {
+    const CARAT_0 = 0;
+    const CARAT_18 = 18;
+    const CARAT_24 = 24;
+    const CARAT_750 = 750;
+    const CARAT_995 = 995;
+    const CARAT_999 = 999;
+
     public function __construct()
     {
         date_default_timezone_set('Asia/Tehran');
@@ -149,7 +156,7 @@ class DigiGold
             return $path;
         }
 
-        $variantsAyar = [];
+        $variantsCarat = [];
         $sellers = [];
         $sizes = [];
         $sellingPrices = ['min' => null, 'max' => null];
@@ -163,7 +170,7 @@ class DigiGold
                 }
                 $productId = $data['product']['id'];
                 $productTitleFa = $data['product']['title_fa'];
-                $ayar = $this->extractAyar($productTitleFa);
+                $carat = $this->extractCarat($productTitleFa);
                 foreach ($data['product']['variants'] as $variant) {
                     $sellerId = $variant['seller']['id'];
                     $sellerTitle = $variant['seller']['title'];
@@ -171,7 +178,7 @@ class DigiGold
                     $sellingPrice = floatval($variant['price']['selling_price']);
                     $pricePerGram = ($sellingPrice / $size);
                     //
-                    $variantsAyar[$ayar][] = [
+                    $variantsCarat[$carat][] = [
                         'id' => $productId,
                         'title_fa' => $productTitleFa,
                         'selling_price' => $sellingPrice,
@@ -180,7 +187,7 @@ class DigiGold
                         'size' => $size,
                         'url' => $data['seo']['open_graph']['url'],
                         'image' => $data['seo']['open_graph']['image'],
-                        '_ayar' => $ayar,
+                        '_carat' => $carat,
                         '_selling_price_formatted' => number_format($sellingPrice / 10),
                         '_price_per_gram' => $pricePerGram,
                         '_price_per_gram_formatted' => number_format($pricePerGram / 10),
@@ -213,12 +220,12 @@ class DigiGold
             return $b['count'] - $a['count'];
         });
         //
-        ksort($variantsAyar);
-        foreach ($variantsAyar as $ayar => $variants) {
+        ksort($variantsCarat);
+        foreach ($variantsCarat as $carat => $variants) {
             usort($variants, function ($a, $b) {
                 return $a['_price_per_gram'] - $b['_price_per_gram'];
             });
-            $variantsAyar[$ayar] = $variants;
+            $variantsCarat[$carat] = $variants;
         }
 
         $this->writeJson($path, [
@@ -226,43 +233,46 @@ class DigiGold
             'selling_prices' => $sellingPrices,
             'sizes' => $sizes,
             'sellers' => $sellers,
-            'variants_ayar' => $variantsAyar,
+            'variants_carat' => $variantsCarat,
         ]);
 
         return $path;
     }
 
-    function extractAyar($productName)
+    function extractCarat($productName)
     {
         foreach (
             [
-                '18عیار' => 18,
-                '18 عیار' => 18,
+                '18عیار' => static::CARAT_18,
+                '18 عیار' => static::CARAT_18,
                 //
-                '24 عیار' => 24,
-                '۲۴ عیار' => 24,
-                '24 عیـار' => 24,
+                '24 عیار' => static::CARAT_24,
+                '۲۴ عیار' => static::CARAT_24,
+                '24 عیـار' => static::CARAT_24,
                 //
-                '750 عیار' => 750,
-                '995 عیار' => 995,
-                '999.9 عیار' => 999,
+                '750 عیار' => static::CARAT_750,
+                '995 عیار' => static::CARAT_995,
+                '999.9 عیار' => static::CARAT_999,
                 //
-                'شمش طلا 24 ' => 24,
-            ] as $ayarKey => $ayarValue
+                'شمش طلا 24 ' => static::CARAT_24,
+            ] as $caratKey => $caratValue
         ) {
-            if (stripos($productName, $ayarKey) !== false) {
-                return $ayarValue;
+            if (stripos($productName, $caratKey) !== false) {
+                return $caratValue;
             }
         }
 
-        return 0;
+        return static::CARAT_0;
     }
 
     function getLastAnalyze()
     {
-        $this->search();
-        $this->product();
-        $path = $this->analyze();
+        $path = $this->path('analyze', 'analyze.json');
+        if (!file_exists($path)) {
+            $this->search();
+            $this->product();
+            $path = $this->analyze();
+        }
 
         return $this->readJson($path);
     }

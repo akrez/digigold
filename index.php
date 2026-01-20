@@ -3,7 +3,10 @@
 include 'DigiGold.php';
 
 $dg = new DigiGold();
+
 $lastAnalyze = $dg->getLastAnalyze();
+$lastAnalyze['variants_carat'] = array_filter($lastAnalyze['variants_carat']);
+$firstCarat = key($lastAnalyze['variants_carat']);
 
 // header('content-type: application/json');
 // die(json_encode($dg->getLastAnalyze()));
@@ -64,17 +67,17 @@ $lastAnalyze = $dg->getLastAnalyze();
             <div class="col-lg-8">
 
                 <ul class="nav nav-pills nav-fill" role="tablist">
-                    <?php foreach ($lastAnalyze['variants_ayar'] as $ayar => $variants) { ?>
+                    <?php foreach ($lastAnalyze['variants_carat'] as $carat => $variants) { ?>
                         <li class="nav-item">
-                            <a class="nav-link <?= $ayar == 18 ? 'active' : '' ?>" data-bs-toggle="tab" href="#tab-<?= crc32($ayar) ?>" role="tab" aria-controls="tab-<?= crc32($ayar) ?>" aria-selected="true">
-                                عیار <?= $ayar ?>
+                            <a class="nav-link <?= $carat == $firstCarat ? 'active' : '' ?>" data-bs-toggle="tab" href="#tab-<?= crc32($carat) ?>" role="tab" aria-controls="tab-<?= crc32($carat) ?>" aria-selected="true">
+                                عیار <?= $carat ?>
                             </a>
                         </li>
                     <?php } ?>
                 </ul>
                 <div class="tab-content border-x px-0 pt-3">
-                    <?php foreach ($lastAnalyze['variants_ayar'] as $ayar => $variants) { ?>
-                        <div class="tab-pane fade <?= $ayar == 18 ? 'show active' : '' ?>" id="tab-<?= crc32($ayar) ?>" role="tabpanel">
+                    <?php foreach ($lastAnalyze['variants_carat'] as $carat => $variants) { ?>
+                        <div class="tab-pane fade <?= $carat == $firstCarat ? 'show active' : '' ?>" id="tab-<?= crc32($carat) ?>" role="tabpanel">
                             <table class="table table-bordered table-striped align-middle">
                                 <thead class="bg-200 text-900 table-dark">
                                     <tr>
