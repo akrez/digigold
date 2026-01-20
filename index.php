@@ -78,7 +78,7 @@ $firstCarat = key($lastAnalyze['variants_carat']);
                 <div class="tab-content border-x px-0 pt-3">
                     <?php foreach ($lastAnalyze['variants_carat'] as $carat => $variants) { ?>
                         <div class="tab-pane fade table-responsive <?= $carat == $firstCarat ? 'show active' : '' ?>" id="tab-<?= crc32($carat) ?>" role="tabpanel">
-                            <table class="table table-bordered table-striped align-middle">
+                            <table class="table table-bordered table-striped table-sm align-middle">
                                 <thead class="bg-200 text-900 table-dark">
                                     <tr>
                                         <th></th>

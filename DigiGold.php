@@ -25,7 +25,7 @@ class DigiGold
 
     function path($dir, $fileName = null)
     {
-        $array = ['.', 'cache', $dir, $this->date()];
+        $array = [__DIR__, 'cache', $dir, $this->date()];
         if ($fileName) {
             $array[] = $fileName;
         }
