@@ -71,10 +71,9 @@ $firstCaratKey = key($analyze['variants_carat']);
                 <div class="tab-content border-x px-0 pt-3">
                     <?php foreach ($analyze['variants_carat'] as $carat => $variants) { ?>
                         <div class="tab-pane fade table-responsive <?= $carat == $firstCaratKey ? 'show active' : '' ?>" id="tab-<?= crc32($carat) ?>" role="tabpanel">
-                            <table class="table table-bordered table-striped table-sm align-middle">
+                            <table class="table table-bordered table-sm align-middle">
                                 <thead class="bg-200 text-900 table-dark">
                                     <tr>
-                                        <th></th>
                                         <th></th>
                                         <th>قیمت هر گرم</th>
                                         <th>قیمت</th>
@@ -83,14 +82,19 @@ $firstCaratKey = key($analyze['variants_carat']);
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach (array_slice($variants, 0, 20) as $variant) { ?>
-                                        <tr>
-                                            <td class="text-center p-0"><img src="<?= $variant['image'] ?>" class="max-50px"></td>
-                                            <td>
+                                    <?php
+                                    foreach (array_slice($variants, 0, 20) as $variantIndex => $variant) {
+                                        $isDark = ($variantIndex % 2 == 1);
+                                    ?>
+                                        <tr class="<?= $isDark ? 'table-secondary' : '' ?>">
+                                            <td rowspan="2" class="text-center p-0"><img src="<?= $variant['image'] ?>" class="max-50px"></td>
+                                            <td colspan="4">
                                                 <a class="text-decoration-none" target="_blank" href="<?= $variant['url'] ?>">
                                                     <?= $variant['title_fa'] ?>
                                                 </a>
                                             </td>
+                                        </tr>
+                                        <tr class="<?= $isDark ? 'table-secondary' : '' ?>">
                                             <td class="font-monospace"><?= $variant['_price_per_gram_formatted'] ?></td>
                                             <td class="font-monospace"><?= $variant['_selling_price_formatted'] ?></td>
                                             <td class="font-monospace"><?= $variant['size'] ?></td>
