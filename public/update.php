@@ -1,7 +1,7 @@
 <?php
 
 date_default_timezone_set('Asia/Tehran');
-set_time_limit(120);
+set_time_limit(180);
 
 $currentPath = __DIR__ . DIRECTORY_SEPARATOR;
 $basePath = $currentPath . '..' . DIRECTORY_SEPARATOR;
