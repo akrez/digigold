@@ -1,5 +1,5 @@
 <?php
-$analyzeFilePath = __DIR__ . DIRECTORY_SEPARATOR . 'analyze.json';
+$analyzeFilePath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'analyze.json';
 $analyze = json_decode(file_get_contents($analyzeFilePath), true);
 $analyze['variants_carat'] = array_filter($analyze['variants_carat']);
 $firstCaratKey = key($analyze['variants_carat']);

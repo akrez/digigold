@@ -3,7 +3,7 @@
 date_default_timezone_set('Asia/Tehran');
 set_time_limit(120);
 
-include 'DigiGold.php';
+include __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'DigiGold.php';
 $dg = new DigiGold(implode(DIRECTORY_SEPARATOR, [__DIR__, 'cache', date('Y-m-d-H').'-'.intval(date('i')/5)*5]));
 $analyze = $dg->analyze();
 
