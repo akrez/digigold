@@ -233,7 +233,7 @@ class DigiGold
 
     public function analyze()
     {
-        $analyzeFilePath = $this->path('analyze.json');
+        $analyzeFilePath = $this->path('index.json');
         if (! file_exists($analyzeFilePath)) {
             $this->downloadSearchPages(1, 1);
             $firstSearchPagePath = $this->path('search', '1.json');

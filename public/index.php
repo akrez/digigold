@@ -1,10 +1,10 @@
 <?php
-$analyzeFilePath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'analyze.json';
+$currentPath = __DIR__ . DIRECTORY_SEPARATOR;
+$analyzeFilePath = $currentPath . 'index.json';
 $analyze = json_decode(file_get_contents($analyzeFilePath), true);
 $analyze['variants_carat'] = array_filter($analyze['variants_carat']);
 $firstCaratKey = key($analyze['variants_carat']);
-?>
-<!doctype html>
+?><!doctype html>
 <html class="h-100" lang="fa">
 
 <head>
