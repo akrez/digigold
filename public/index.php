@@ -8,7 +8,7 @@ $firstCaratKey = key($analyze['variants_carat']);
 <html class="h-100" lang="fa">
 
 <head>
-    <title>Akrezing Digikala Gold</title>
+    <title>Akrez Digikala Gold</title>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
