@@ -2,13 +2,6 @@
 
 class DigiGold
 {
-    const CARAT_0 = 0;
-    const CARAT_18 = 18;
-    const CARAT_24 = 24;
-    const CARAT_750 = 750;
-    const CARAT_995 = 995;
-    const CARAT_999 = 999;
-
     public function __construct(public $basePath)
     {
         foreach (['search', 'product'] as $dir) {
@@ -62,6 +55,11 @@ class DigiGold
                 curl_multi_remove_handle($multiCurl, $ch);
             }
         }
+    }
+
+    protected function sanitizeNumber($string)
+    {
+        return preg_replace('/[^\\d.]+/', '', $string);
     }
 
     protected function readJson($path): array
@@ -124,14 +122,7 @@ class DigiGold
 
     protected function writeAnalyzeFile($path)
     {
-        $variantsCarat = [
-            static::CARAT_0 => [],
-            static::CARAT_18 => [],
-            static::CARAT_24 => [],
-            static::CARAT_750 => [],
-            static::CARAT_995 => [],
-            static::CARAT_999 => [],
-        ];
+        $variantsCarat = [];
         $sellers = [];
         $sellingPrices = [];
         $sizes = [];
@@ -145,15 +136,15 @@ class DigiGold
                 }
                 $productId = $data['product']['id'];
                 $productTitleFa = $data['product']['title_fa'];
-                $carat = $this->extractCarat($productTitleFa);
+                $carat = $this->extractCarat($data['product']);
                 foreach ($data['product']['variants'] as $variant) {
                     $sellerId = $variant['seller']['id'];
                     $sellerTitle = $variant['seller']['title'];
-                    $size = floatval($variant['price']['gold_price_details']['size']);
+                    $size = $this->extractSize($variant);
                     $sellingPrice = floatval($variant['price']['selling_price']);
                     $pricePerGram = ($sellingPrice / $size);
                     //
-                    $variantsCarat[$carat][] = [
+                    $variantsCarat[strval($carat)][] = [
                         'id' => $productId,
                         'title_fa' => $productTitleFa,
                         'selling_price' => $sellingPrice,
@@ -205,30 +196,27 @@ class DigiGold
         return $path;
     }
 
-    protected function extractCarat($productName)
+    protected function extractSize($variant)
     {
-        foreach (
-            [
-                '18عیار' => static::CARAT_18,
-                '18 عیار' => static::CARAT_18,
-                //
-                '24 عیار' => static::CARAT_24,
-                '۲۴ عیار' => static::CARAT_24,
-                '24 عیـار' => static::CARAT_24,
-                //
-                '750 عیار' => static::CARAT_750,
-                '995 عیار' => static::CARAT_995,
-                '999.9 عیار' => static::CARAT_999,
-                //
-                'شمش طلا 24 ' => static::CARAT_24,
-            ] as $caratKey => $caratValue
-        ) {
-            if (stripos($productName, $caratKey) !== false) {
-                return $caratValue;
+        return floatval($this->sanitizeNumber($variant['size']['title']));
+    }
+
+    protected function extractCarat($product)
+    {
+        foreach ($product['specifications'] as $specification) {
+            foreach ($specification['attributes'] as $attribute) {
+                if(strpos($attribute['title'], 'عیار') !== false) {
+                    foreach ($attribute['values'] as $attributeValue) {
+                        $carat = $this->sanitizeNumber($attributeValue);
+                        if ($carat) {
+                            return floatval($carat);
+                        }
+                    }
+                }
             }
         }
 
-        return static::CARAT_0;
+        return null;
     }
 
     public function analyze()
