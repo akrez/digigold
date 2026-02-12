@@ -158,6 +158,7 @@ class DigiGold
                         '_selling_price_formatted' => number_format($sellingPrice / 10),
                         '_price_per_gram' => $pricePerGram,
                         '_price_per_gram_formatted' => number_format($pricePerGram / 10),
+                        'source' => 'Digikala',
                     ];
                     //
                     $sellers[$sellerId] = [

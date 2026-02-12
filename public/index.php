@@ -79,6 +79,7 @@ $firstCaratKey = key($analyze['variants_carat']);
                                         <th>قیمت</th>
                                         <th>وزن</th>
                                         <th>فروشنده</th>
+                                        <th>منبع</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -88,7 +89,7 @@ $firstCaratKey = key($analyze['variants_carat']);
                                     ?>
                                         <tr class="<?= $isDark ? 'table-secondary' : '' ?>">
                                             <td rowspan="2" class="text-center p-0"><img src="<?= $variant['image'] ?>" class="max-50px"></td>
-                                            <td colspan="4">
+                                            <td colspan="5">
                                                 <a class="text-decoration-none" target="_blank" href="<?= $variant['url'] ?>">
                                                     <?= $variant['title_fa'] ?>
                                                 </a>
@@ -99,6 +100,7 @@ $firstCaratKey = key($analyze['variants_carat']);
                                             <td class="font-monospace"><?= $variant['_selling_price_formatted'] ?></td>
                                             <td class="font-monospace"><?= $variant['size'] ?></td>
                                             <td><?= $variant['seller_title'] ?></td>
+                                            <td><?= $variant['source'] ?></td>
                                         </tr>
                                     <?php } ?>
                                 </tbody>
