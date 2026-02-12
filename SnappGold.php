@@ -276,11 +276,7 @@ class SnappGold
                     }
                 }
             } catch (\Throwable $th) {
-                var_dump($productId);
-                // exit;
             } catch (\Exception $e) {
-                var_dump($productId);
-                // exit;
             }
         }
 
