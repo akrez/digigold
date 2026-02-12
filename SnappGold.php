@@ -268,7 +268,7 @@ class SnappGold
                             '_selling_price_formatted' => number_format($sellingPrice),
                             '_price_per_gram' => $pricePerGram,
                             '_price_per_gram_formatted' => number_format($pricePerGram),
-                            'source' => 'snappshop',
+                            'source' => 'SnappShop',
                         ];
                         //
                         $sizes[strval($size)] = $size;
