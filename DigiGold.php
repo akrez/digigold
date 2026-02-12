@@ -16,6 +16,7 @@ class DigiGold
         if ($fileName !== null) {
             $array[] = $fileName;
         }
+
         return implode(DIRECTORY_SEPARATOR, $array);
     }
 
@@ -31,15 +32,15 @@ class DigiGold
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    "accept: application/json, text/plain, */*",
-                    "accept-language: en-US,en;q=0.9,fa;q=0.8",
-                    "priority: u=1, i",
-                    "sec-fetch-dest: empty",
-                    "sec-fetch-mode: cors",
-                    "sec-fetch-site: same-site",
-                    "x-web-client: desktop",
-                    "x-web-client-id: web",
-                    "x-web-optimize-response: 1"
+                    'accept: application/json, text/plain, */*',
+                    'accept-language: en-US,en;q=0.9,fa;q=0.8',
+                    'priority: u=1, i',
+                    'sec-fetch-dest: empty',
+                    'sec-fetch-mode: cors',
+                    'sec-fetch-site: same-site',
+                    'x-web-client: desktop',
+                    'x-web-client-id: web',
+                    'x-web-optimize-response: 1',
                 ]);
                 curl_multi_add_handle($multiCurl, $ch);
             }
@@ -64,21 +65,21 @@ class DigiGold
 
     protected function readJson($path): array
     {
-        return (array)json_decode(file_get_contents($path), true);
+        return (array) json_decode(file_get_contents($path), true);
     }
 
     protected function writeJson($path, ?array $arrayContent)
     {
-        file_put_contents($path, json_encode((array)$arrayContent, JSON_UNESCAPED_UNICODE));
+        file_put_contents($path, json_encode((array) $arrayContent, JSON_UNESCAPED_UNICODE));
     }
 
     protected function downloadSearchPages($fromPage, $toPage)
     {
         $urls = [];
         for ($i = $fromPage; $i <= $toPage; $i++) {
-            $path = $this->path('search', $i . '.json');
+            $path = $this->path('search', $i.'.json');
             if (! file_exists($path)) {
-                $urls[] = 'https://api.digikala.com/v1/categories/bullion/search/?has_selling_stock=1&page=' . $i . '&sort=7';
+                $urls[] = 'https://api.digikala.com/v1/categories/bullion/search/?has_selling_stock=1&page='.$i.'&sort=7';
             }
         }
         if (empty($urls)) {
@@ -87,7 +88,7 @@ class DigiGold
         $this->sendMultiGet($urls, function ($response) {
             $response = json_decode($response, true);
             if (! empty($response['data']['pager']['current_page'])) {
-                $path = $this->path('search', $response['data']['pager']['current_page'] . '.json');
+                $path = $this->path('search', $response['data']['pager']['current_page'].'.json');
                 $this->writeJson($path, $response);
             }
         });
@@ -104,9 +105,9 @@ class DigiGold
                 continue;
             }
             foreach ($pageContent['data']['products'] as $product) {
-                $path = $this->path('product', $product['id'] . '.json');
+                $path = $this->path('product', $product['id'].'.json');
                 if (! file_exists($path)) {
-                    $urls[] = 'https://api.digikala.com/v2/product/' . $product['id'] . '/';
+                    $urls[] = 'https://api.digikala.com/v2/product/'.$product['id'].'/';
                 }
             }
         }
@@ -114,7 +115,7 @@ class DigiGold
         $this->sendMultiGet($urls, function ($response) {
             $response = json_decode($response, true);
             if (! empty($response['data']['product']['id'])) {
-                $path = $this->path('product', $response['data']['product']['id'] . '.json');
+                $path = $this->path('product', $response['data']['product']['id'].'.json');
                 $this->writeJson($path, $response);
             }
         });
@@ -205,11 +206,21 @@ class DigiGold
     {
         foreach ($product['specifications'] as $specification) {
             foreach ($specification['attributes'] as $attribute) {
-                if(strpos($attribute['title'], 'عیار') !== false) {
+                if (strpos($attribute['title'], 'عیار') !== false) {
                     foreach ($attribute['values'] as $attributeValue) {
                         $carat = $this->sanitizeNumber($attributeValue);
                         if ($carat) {
-                            return floatval($carat);
+                            $carat = floatval($carat);
+                            switch ($carat) {
+                                case 18:
+                                case 750:
+                                    return 18;
+                                case 24:
+                                case 995:
+                                    return 24;
+                                default:
+                                    return $carat;
+                            }
                         }
                     }
                 }
