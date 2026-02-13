@@ -4,6 +4,15 @@ namespace App;
 
 class SnappShopGold extends Gold
 {
+    public function __construct(public string $source, public array $basePathSegments)
+    {
+        $this->basePath = $this->implodePathSegments($basePathSegments);
+        foreach (['search', 'product'] as $dir) {
+            $path = $this->path($dir);
+            $this->mkdir($path);
+        }
+    }
+    
     protected function extractSize($attributes, $attributeIds)
     {
         foreach ($attributeIds as $attributeId) {
@@ -28,19 +37,20 @@ class SnappShopGold extends Gold
                     switch ($carat) {
                         case 18:
                         case 750:
-                            return 18;
+                            return static::CARAT_18;
                         case 24:
                         case 995:
+                            return static::CARAT_24;
                         case 999:
-                            return 24;
+                        case 999.9:
+                            return static::CARAT_9999;
                         default:
-                            return $carat;
                     }
                 }
             }
         }
 
-        return null;
+        return static::CARAT_10000;
     }
 
     protected function downloadSearchPages($fromPage, $toPage)
@@ -178,7 +188,7 @@ class SnappShopGold extends Gold
 
     public function analyze()
     {
-        $analyzeFilePath = $this->path('index.json');
+        $analyzeFilePath = $this->path('analyze.json');
         if (! file_exists($analyzeFilePath)) {
             $this->downloadSearchPages(1, 1);
             $firstSearchPagePath = $this->path('search', '1.json');

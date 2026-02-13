@@ -6,15 +6,6 @@ class Bullion
 {
     protected $basePath;
 
-    public function __construct(public string $source, public array $basePathSegments)
-    {
-        $this->basePath = $this->implodePathSegments($basePathSegments);
-        foreach (['search', 'product'] as $dir) {
-            $path = $this->path($dir);
-            $this->mkdir($path);
-        }
-    }
-
     protected function path($dir, $fileName = null)
     {
         $array = [$this->basePath, $dir];

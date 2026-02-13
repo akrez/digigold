@@ -1,9 +1,9 @@
 <?php
-$currentPath = __DIR__ . DIRECTORY_SEPARATOR;
-$analyzeFilePath = $currentPath . 'index.json';
+$currentPath = __DIR__.DIRECTORY_SEPARATOR;
+$analyzeFilePath = $currentPath.'index.json';
 $analyze = json_decode(file_get_contents($analyzeFilePath), true);
-$analyze['variants_carat'] = array_filter($analyze['variants_carat']);
-$firstCaratKey = key($analyze['variants_carat']);
+$analyze['items'] = array_filter($analyze['items']);
+$firstCaratKey = key($analyze['items']);
 ?><!doctype html>
 <html class="h-100" lang="fa">
 
@@ -60,7 +60,7 @@ $firstCaratKey = key($analyze['variants_carat']);
             <div class="col-lg-8">
 
                 <ul class="nav nav-pills nav-fill" role="tablist">
-                    <?php foreach ($analyze['variants_carat'] as $carat => $variants) { ?>
+                    <?php foreach ($analyze['items'] as $carat => $items) { ?>
                         <li class="nav-item">
                             <a class="nav-link <?= $carat == $firstCaratKey ? 'active' : '' ?>" data-bs-toggle="tab" href="#tab-<?= crc32($carat) ?>" role="tab" aria-controls="tab-<?= crc32($carat) ?>" aria-selected="true">
                                 عیار <?= $carat ?>
@@ -69,7 +69,7 @@ $firstCaratKey = key($analyze['variants_carat']);
                     <?php } ?>
                 </ul>
                 <div class="tab-content border-x px-0 pt-3">
-                    <?php foreach ($analyze['variants_carat'] as $carat => $variants) { ?>
+                    <?php foreach ($analyze['items'] as $carat => $items) { ?>
                         <div class="tab-pane fade table-responsive <?= $carat == $firstCaratKey ? 'show active' : '' ?>" id="tab-<?= crc32($carat) ?>" role="tabpanel">
                             <table class="table table-bordered table-sm align-middle">
                                 <thead class="bg-200 text-900 table-dark">
@@ -84,23 +84,23 @@ $firstCaratKey = key($analyze['variants_carat']);
                                 </thead>
                                 <tbody>
                                     <?php
-                                    foreach (array_slice($variants, 0, 20) as $variantIndex => $variant) {
-                                        $isDark = ($variantIndex % 2 == 1);
-                                    ?>
+                                    foreach (array_slice($items, 0, 20) as $itemIndex => $item) {
+                                        $isDark = ($itemIndex % 2 == 1);
+                                        ?>
                                         <tr class="<?= $isDark ? 'table-secondary' : '' ?>">
-                                            <td rowspan="2" class="text-center p-0"><img src="<?= $variant['image'] ?>" class="max-50px"></td>
+                                            <td rowspan="2" class="text-center p-0"><img src="<?= $item['image'] ?>" class="max-50px"></td>
                                             <td colspan="5">
-                                                <a class="text-decoration-none" target="_blank" href="<?= $variant['url'] ?>">
-                                                    <?= $variant['title_fa'] ?>
+                                                <a class="text-decoration-none" target="_blank" href="<?= $item['url'] ?>">
+                                                    <?= $item['title'] ?>
                                                 </a>
                                             </td>
                                         </tr>
                                         <tr class="<?= $isDark ? 'table-secondary' : '' ?>">
-                                            <td class="font-monospace"><?= $variant['_price_per_gram_formatted'] ?></td>
-                                            <td class="font-monospace"><?= $variant['_selling_price_formatted'] ?></td>
-                                            <td class="font-monospace"><?= $variant['size'] ?></td>
-                                            <td><?= $variant['seller_title'] ?></td>
-                                            <td><?= $variant['source'] ?></td>
+                                            <td class="font-monospace"><?= $item['pricePerGram']['f'] ?></td>
+                                            <td class="font-monospace"><?= $item['price']['f'] ?></td>
+                                            <td class="font-monospace"><?= $item['size'] ?></td>
+                                            <td><?= $item['seller'] ?></td>
+                                            <td><?= $item['source'] ?></td>
                                         </tr>
                                     <?php } ?>
                                 </tbody>
