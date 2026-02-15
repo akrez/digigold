@@ -79,28 +79,27 @@ $firstCaratKey = key($analyze['items']);
                                         <th>قیمت</th>
                                         <th>وزن</th>
                                         <th>فروشنده</th>
-                                        <th>منبع</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php
                                     foreach (array_slice($items, 0, 20) as $itemIndex => $item) {
-                                        $isDark = ($itemIndex % 2 == 1);
+                                        $rowTheme = ($itemIndex % 2 ? ' table-secondary ' : '');
                                         ?>
-                                        <tr class="<?= $isDark ? 'table-secondary' : '' ?>">
+                                        <tr class="<?= $rowTheme ?>">
                                             <td rowspan="2" class="text-center p-0"><img src="<?= $item['image'] ?>" class="max-50px"></td>
-                                            <td colspan="5">
+                                            <td colspan="3">
                                                 <a class="text-decoration-none" target="_blank" href="<?= $item['url'] ?>">
                                                     <?= $item['title'] ?>
                                                 </a>
                                             </td>
+                                            <td><?= $item['source'] ?></td>
                                         </tr>
-                                        <tr class="<?= $isDark ? 'table-secondary' : '' ?>">
+                                        <tr class="<?= $rowTheme ?>">
                                             <td class="font-monospace"><?= $item['pricePerGram']['f'] ?></td>
                                             <td class="font-monospace"><?= $item['price']['f'] ?></td>
                                             <td class="font-monospace"><?= $item['size'] ?></td>
                                             <td><?= $item['seller'] ?></td>
-                                            <td><?= $item['source'] ?></td>
                                         </tr>
                                     <?php } ?>
                                 </tbody>
