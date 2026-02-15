@@ -93,13 +93,13 @@ $firstCaratKey = key($analyze['items']);
                                                     <?= $item['title'] ?>
                                                 </a>
                                             </td>
-                                            <td><?= $item['source'] ?></td>
+                                            <td><?= $item['seller'] ?></td>
                                         </tr>
                                         <tr class="<?= $rowTheme ?>">
                                             <td class="font-monospace"><?= $item['pricePerGram']['f'] ?></td>
                                             <td class="font-monospace"><?= $item['price']['f'] ?></td>
                                             <td class="font-monospace"><?= $item['size'] ?></td>
-                                            <td><?= $item['seller'] ?></td>
+                                            <td><?= $item['source'] ?></td>
                                         </tr>
                                     <?php } ?>
                                 </tbody>
