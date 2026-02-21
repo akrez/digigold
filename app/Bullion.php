@@ -43,45 +43,45 @@ class Bullion
 
     protected function sendMultiGet(array $urls, $fn, $chunkLength = 60)
     {
-        $handlers = [];
-        foreach ($urls as $url) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'accept: application/json, text/plain, */*',
-                'accept-language: en-US,en;q=0.9,fa;q=0.8',
-                'priority: u=1, i',
-                'sec-fetch-dest: empty',
-                'sec-fetch-mode: cors',
-                'sec-fetch-site: same-site',
-                'x-web-client: desktop',
-                'x-web-client-id: web',
-                'x-web-optimize-response: 1',
-            ]);
-            $handlers[] = $ch;
+        foreach (array_chunk($urls, $chunkLength) as $chunkedUrls) {
+            $handlers = [];
+            foreach ($chunkedUrls as $url) {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'accept: application/json, text/plain, */*',
+                    'accept-language: en-US,en;q=0.9,fa;q=0.8',
+                    'priority: u=1, i',
+                    'sec-fetch-dest: empty',
+                    'sec-fetch-mode: cors',
+                    'sec-fetch-site: same-site',
+                    'x-web-client: desktop',
+                    'x-web-client-id: web',
+                    'x-web-optimize-response: 1',
+                ]);
+                $handlers[] = $ch;
+            }
+            $this->sendMultiRequest($handlers, $fn);
+            unset($chunkedUrls);
         }
-
-        return $this->sendMultiRequest($handlers, $fn, $chunkLength);
     }
 
-    protected function sendMultiRequest(array $handlers, $fn, $chunkLength = 60)
+    protected function sendMultiRequest(array $handlers, $fn)
     {
-        foreach (array_chunk($handlers, $chunkLength) as $chunkedHandlers) {
-            $multiCurl = curl_multi_init();
-            foreach ($chunkedHandlers as $handler) {
-                curl_multi_add_handle($multiCurl, $handler);
-            }
-            do {
-                curl_multi_exec($multiCurl, $running);
-            } while ($running > 0);
-            while (($info = curl_multi_info_read($multiCurl)) !== false) {
-                $ch = $info['handle'];
-                $response = curl_multi_getcontent($ch);
-                $fn($response);
-                curl_multi_remove_handle($multiCurl, $ch);
-            }
+        $multiCurl = curl_multi_init();
+        foreach ($handlers as $handler) {
+            curl_multi_add_handle($multiCurl, $handler);
+        }
+        do {
+            curl_multi_exec($multiCurl, $running);
+        } while ($running > 0);
+        while (($info = curl_multi_info_read($multiCurl)) !== false) {
+            $ch = $info['handle'];
+            $response = curl_multi_getcontent($ch);
+            $fn($response);
+            curl_multi_remove_handle($multiCurl, $ch);
         }
     }
 

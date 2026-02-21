@@ -12,7 +12,7 @@ class SnappShopGold extends Gold
             $this->mkdir($path);
         }
     }
-    
+
     protected function extractSize($attributes, $attributeIds)
     {
         foreach ($attributeIds as $attributeId) {
@@ -55,10 +55,19 @@ class SnappShopGold extends Gold
 
     protected function downloadSearchPages($fromPage, $toPage)
     {
-        $handlers = [];
+        $chunkLength = 50;
+
+        $pages = [];
         for ($i = $fromPage; $i <= $toPage; $i++) {
             $path = $this->path('search', $i.'.json');
             if (! file_exists($path)) {
+                $pages[] = $i;
+            }
+        }
+
+        foreach (array_chunk($pages, $chunkLength) as $chunkedPages) {
+            $handlers = [];
+            foreach ($chunkedPages as $page) {
                 $ch = curl_init();
                 curl_setopt_array($ch, [
                     CURLOPT_URL => 'https://apix.snappshop.ir/landing/v2?lat=35.00&lng=51.00',
@@ -70,7 +79,7 @@ class SnappShopGold extends Gold
                         'is_available' => true,
                         'page_type' => 'category',
                         'render' => 4,
-                        'skip' => $i,
+                        'skip' => $page,
                         'slug' => 'gold-bullion',
                     ]),
                     CURLOPT_HTTPHEADER => [
@@ -92,20 +101,17 @@ class SnappShopGold extends Gold
                 ]);
                 $handlers[] = $ch;
             }
+            $this->sendMultiRequest($handlers, function ($response) {
+                $response = json_decode($response, true);
+                if (
+                    isset($response['data']['structure'][2]['pagination']) &&
+                    ($pagination = $response['data']['structure'][2]['pagination'])
+                ) {
+                    $path = $this->path('search', $pagination['current_page'].'.json');
+                    $this->writeJson($path, $response);
+                }
+            });
         }
-        if (empty($handlers)) {
-            return;
-        }
-        $this->sendMultiRequest($handlers, function ($response) {
-            $response = json_decode($response, true);
-            if (
-                isset($response['data']['structure'][2]['pagination']) &&
-                ($pagination = $response['data']['structure'][2]['pagination'])
-            ) {
-                $path = $this->path('search', $pagination['current_page'].'.json');
-                $this->writeJson($path, $response);
-            }
-        });
     }
 
     protected function downloadProductPages()
