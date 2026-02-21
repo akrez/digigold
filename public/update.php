@@ -4,6 +4,7 @@ use App\DigiKalaGold;
 use App\Gold;
 use App\SnappShopGold;
 
+ini_set('memory_limit', '-1');
 date_default_timezone_set('Asia/Tehran');
 set_time_limit(180);
 
